@@ -2,29 +2,51 @@ import { TelegramClient } from "telegram";
 import { NewMessageEvent } from "telegram/events";
 import { Api } from "telegram";
 import { logger } from "../utils/logger";
+import TelegramBot from "node-telegram-bot-api";
 import { config } from "../config/config";
+
+const sendingOptions = {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        {
+          text: "🤙 Опубликовать",
+          callback_data: "publish_image",
+        },
+      ],
+    ],
+  },
+};
 
 export const handleNewMessage = async (
   client: TelegramClient,
   event: NewMessageEvent,
+  bot: TelegramBot,
 ) => {
   try {
     const message = event.message;
     const sender = await message.getSender();
 
     if (sender instanceof Api.Channel) {
-      const { title: channelTitle, username: channelUsername } = sender;
+      const { title: channelTitle } = sender;
 
       if (
         message.media instanceof Api.MessageMediaPhoto &&
         message.media.photo
       ) {
         logger.info(`Получено фото из канала ${channelTitle}`);
-        await client.sendFile(config.CHANEL_WITH_STEELED_MEM!, {
-          file: message.media.photo,
-          caption: `Фото из канала ${channelTitle}`,
-        });
-        logger.info("Фото успешно отправлено.");
+
+        const photoBuffer = await client.downloadMedia(message.media);
+
+        if (photoBuffer) {
+          bot.sendPhoto(
+            `@${config.CHANEL_WITH_STEELED_MEM_USERNAME}`,
+            photoBuffer,
+            sendingOptions,
+          );
+        }
+
+        logger.info("Фото отправлено в ворованные мемы.");
       }
     }
   } catch (err) {

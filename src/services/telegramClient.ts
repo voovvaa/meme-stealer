@@ -8,8 +8,8 @@ import input from "input";
 export const initializeClient = (sessionString: string): TelegramClient => {
   return new TelegramClient(
     new StringSession(sessionString),
-    config.API_ID,
-    config.API_HASH!,
+    config.client.API_ID,
+    config.client.API_HASH,
     {
       connectionRetries: 5,
     },
@@ -20,8 +20,8 @@ export const authenticateClient = async (
   client: TelegramClient,
 ): Promise<string> => {
   await client.start({
-    phoneNumber: config.PHONE_NUMBER!,
-    password: async () => config.TELEGRAM_PASSWORD!,
+    phoneNumber: config.client.PHONE_NUMBER,
+    password: async () => config.client.TELEGRAM_PASSWORD,
     phoneCode: async () => await input.text("Введите код из Telegram: "),
     onError: (err) => {
       logger.error(`Ошибка авторизации: ${err.message}`);
