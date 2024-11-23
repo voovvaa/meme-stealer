@@ -5,19 +5,35 @@ import { logger } from "../utils/logger";
 import TelegramBot from "node-telegram-bot-api";
 import { config } from "../config/config";
 
-const sendingOptions = {
-  reply_markup: {
-    inline_keyboard: [
-      [
-        {
-          text: "🤙 Опубликовать",
-          callback_data: "publish_image",
-        },
-      ],
+const getSendingOption = (
+  title: string,
+  id: number,
+  username?: string,
+): TelegramBot.SendPhotoOptions => {
+  const inlineKeyboard: TelegramBot.InlineKeyboardButton[][] = [
+    [
+      {
+        text: "🤙 Опубликовать",
+        callback_data: "publish_image",
+      },
     ],
-  },
-};
+  ];
 
+  if (username) {
+    inlineKeyboard.push([
+      {
+        text: `${title}`,
+        url: `https://t.me/${username}/${id}`,
+      },
+    ]);
+  }
+
+  return {
+    reply_markup: {
+      inline_keyboard: inlineKeyboard,
+    },
+  };
+};
 export const handleNewMessage = async (
   client: TelegramClient,
   event: NewMessageEvent,
@@ -27,8 +43,13 @@ export const handleNewMessage = async (
     const message = event.message;
     const sender = await message.getSender();
 
+    if (message.text.toLowerCase().includes("реклама")) {
+      logger.info("Получено сообщение с рекламой, скип");
+      return;
+    }
+
     if (sender instanceof Api.Channel) {
-      const { title: channelTitle } = sender;
+      const { title: channelTitle, username: chanelUsername } = sender;
 
       if (
         message.media instanceof Api.MessageMediaPhoto &&
@@ -42,7 +63,8 @@ export const handleNewMessage = async (
           bot.sendPhoto(
             `@${config.CHANEL_WITH_STEELED_MEM_USERNAME}`,
             photoBuffer,
-            sendingOptions,
+            getSendingOption(channelTitle, message.id, chanelUsername),
+            { filename: crypto.randomUUID(), contentType: "image/*" },
           );
         }
 
