@@ -64,7 +64,7 @@ export const handleNewMessage = async (
             `@${config.CHANEL_WITH_STEELED_MEM_USERNAME}`,
             photoBuffer,
             getSendingOption(channelTitle, message.id, chanelUsername),
-            { filename: crypto.randomUUID(), contentType: "image/*" },
+            { filename: Math.random().toString(), contentType: "image/*" },
           );
         }
 
