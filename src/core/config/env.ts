@@ -80,5 +80,3 @@ const parseStructuredEnv = () => {
 const parsed = parseStructuredEnv();
 
 export const env = parsed;
-
-export type AppEnv = typeof env;

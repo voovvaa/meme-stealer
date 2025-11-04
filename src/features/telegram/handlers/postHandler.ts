@@ -195,18 +195,15 @@ export const registerChannelPostHandler = (client: TelegramClient) => {
           return;
         }
 
-        const captionText = content.length ? content : null;
         const sourceChannelId = String(channelMeta.id);
 
-        for (const [index, file] of newMedia.entries()) {
+        for (const [, file] of newMedia.entries()) {
           const forceDocument = Boolean(file.mimeType && !file.mimeType.startsWith("image/"));
-          const captionForFile = index === 0 ? captionText ?? undefined : undefined;
 
           const customFile = new CustomFile(file.fileName, file.buffer.byteLength, "", file.buffer);
 
           const sendFileOptions: Parameters<TelegramClient["sendFile"]>[1] = {
             file: customFile,
-            caption: captionForFile,
             forceDocument,
             workers: 1,
           };
@@ -220,7 +217,7 @@ export const registerChannelPostHandler = (client: TelegramClient) => {
           }
 
           const sentMessage = await client.sendFile(env.targetChannelId, sendFileOptions);
-          const targetMessageId = sentMessage instanceof Api.Message ? sentMessage.id : null;
+          const targetMessageId = sentMessage.id;
 
           memeRepository.save({
             hash: file.hash,
