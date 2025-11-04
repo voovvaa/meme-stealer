@@ -1,0 +1,45 @@
+name: Deploy to Synology DS220+
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+      
+      - name: Deploy to Synology via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SYNOLOGY_TAILSCALE_IP }}
+          username: ${{ secrets.SYNOLOGY_USER }}
+          key: ${{ secrets.SYNOLOGY_SSH_KEY }}
+          port: ${{ secrets.SYNOLOGY_PORT }}
+          timeout: 30s
+          command_timeout: 10m
+          script: |
+            export PATH=/usr/local/bin:/bin:/usr/bin:$PATH
+            cd /volume1/docker/meme-stealer
+            /bin/git pull origin main
+            /usr/local/bin/docker-compose down
+            /usr/local/bin/docker-compose build --no-cache
+            /usr/local/bin/docker-compose up -d
+            /usr/local/bin/docker-compose logs --tail=50
+      
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Deployment to Synology DS220+ via Tailscale completed successfully!"
+      
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Deployment failed! Check logs on Synology."

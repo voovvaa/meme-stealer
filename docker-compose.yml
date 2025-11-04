@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  meme-stealer:
+    build: .
+    container_name: meme-stealer
+    restart: unless-stopped
+
+    volumes:
+      - ./sessions:/app/sessions
+
+    env_file:
+      - .env
+
+    environment:
+      - NODE_ENV=production
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

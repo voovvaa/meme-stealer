@@ -1,6 +1,11 @@
-.idea
 node_modules
-.env
 dist
-session.txt
-bot.log
+.env
+sessions/
+*.log
+.idea
+memes.sqlite
+.env.local
+.env.*.local
+node_modules/
+dist/
