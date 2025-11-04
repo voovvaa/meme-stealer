@@ -22,6 +22,10 @@ db.exec(`
     target_message_id INTEGER,
     created_at TEXT NOT NULL
   );
+
+  CREATE INDEX IF NOT EXISTS idx_memes_hash ON memes(hash);
+  CREATE INDEX IF NOT EXISTS idx_memes_created_at ON memes(created_at);
+  CREATE INDEX IF NOT EXISTS idx_memes_source_channel ON memes(source_channel_id);
 `);
 
 const selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");

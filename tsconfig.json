@@ -1,20 +1,43 @@
 {
   "compilerOptions": {
+    /* Language and Environment */
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": false,
-    "noEmit": true,
+
+    /* Type Checking */
     "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+
+    /* Modules */
+    "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
-    "types": ["node"],
     "baseUrl": "./src",
     "paths": {
       "telegram/*": ["../node_modules/telegram/*"]
-    }
+    },
+
+    /* Emit */
+    "noEmit": true,
+    "sourceMap": false,
+
+    /* Interop Constraints */
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* Skip Checking */
+    "skipLibCheck": true,
+
+    /* Type Definitions */
+    "types": ["node"]
   },
-  "include": ["src", "src/types"]
+  "include": ["src", "src/types"],
+  "exclude": ["node_modules", "dist"]
 }

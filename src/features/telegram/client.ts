@@ -7,17 +7,18 @@ import { ask } from "./helpers/prompt.js";
 import { loadSessionString, saveSessionString } from "./helpers/sessionStorage.js";
 import { env } from "../../core/config/env.js";
 import { logger } from "../../core/logger.js";
+import { TELEGRAM_CLIENT_CONFIG } from "../../core/constants.js";
 
 const createClientInstance = (
   sessionString: string,
 ): { client: TelegramClient; stringSession: StringSession } => {
   const stringSession = new StringSession(sessionString);
   const client = new TelegramClient(stringSession, env.apiId, env.apiHash, {
-    connectionRetries: 10,
-    requestRetries: 5,
-    retryDelay: 2000,
+    connectionRetries: TELEGRAM_CLIENT_CONFIG.CONNECTION_RETRIES,
+    requestRetries: TELEGRAM_CLIENT_CONFIG.REQUEST_RETRIES,
+    retryDelay: TELEGRAM_CLIENT_CONFIG.RETRY_DELAY,
     autoReconnect: true,
-    timeout: 30,
+    timeout: TELEGRAM_CLIENT_CONFIG.TIMEOUT,
   });
 
   return { client, stringSession };

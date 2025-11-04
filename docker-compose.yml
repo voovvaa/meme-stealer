@@ -1,22 +1,68 @@
-version: '3.8'
-
 services:
   meme-stealer:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Используем BuildKit для лучшего кэширования
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+
+    image: meme-stealer:latest
     container_name: meme-stealer
+
+    # Политика перезапуска
     restart: unless-stopped
 
+    # Volumes для персистентных данных
     volumes:
       - ./sessions:/app/sessions
 
+    # Переменные окружения
     env_file:
       - .env
-
     environment:
       - NODE_ENV=production
 
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Healthcheck для мониторинга состояния
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('fs').statSync('/app/sessions')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+    # Логирование с ротацией
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+        compress: "true"
+
+    # Изоляция сети (опционально)
+    networks:
+      - meme-stealer-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Read-only root filesystem (если приложение позволяет)
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+
+# Определение сети
+networks:
+  meme-stealer-network:
+    driver: bridge

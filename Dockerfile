@@ -3,32 +3,81 @@ FROM node:20-bullseye-slim AS deps
 
 WORKDIR /app
 
+# Установка системных зависимостей для сборки native модулей
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 build-essential \
+  && apt-get install -y --no-install-recommends \
+    python3 \
+    build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-RUN npm install
+# Копируем только файлы зависимостей для кэширования слоя
+COPY package.json package-lock.json ./
+
+# Устанавливаем все зависимости (включая dev) для сборки
+RUN npm ci
 
 # ---------- STAGE 2: BUILD ----------
 FROM deps AS builder
 
+WORKDIR /app
+
+# Копируем исходный код
 COPY . .
+
+# Собираем проект
 RUN npm run build
 
-# ---------- STAGE 3: RUNTIME ----------
-FROM node:20-bullseye-slim AS runner
+# ---------- STAGE 3: PRODUCTION DEPENDENCIES ----------
+FROM node:20-bullseye-slim AS prod-deps
 
 WORKDIR /app
-ENV NODE_ENV=production
 
-COPY package*.json ./
-COPY --from=deps /app/node_modules ./node_modules
-RUN npm prune --omit=dev
+# Копируем package files
+COPY package.json package-lock.json ./
 
-COPY --from=builder /app/dist ./dist
+# Устанавливаем только production зависимости
+RUN npm ci --omit=dev && npm cache clean --force
 
-RUN mkdir -p /app/sessions
+# ---------- STAGE 4: RUNTIME ----------
+FROM node:20-bullseye-slim AS runner
+
+# Метаданные образа
+LABEL org.opencontainers.image.title="Meme Stealer"
+LABEL org.opencontainers.image.description="Telegram meme aggregator bot"
+LABEL org.opencontainers.image.vendor="voovvaa"
+LABEL org.opencontainers.image.licenses="MIT"
+
+WORKDIR /app
+
+# Создаем non-root пользователя для безопасности
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
+
+# Устанавливаем переменные окружения
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=512"
+
+# Копируем production зависимости
+COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+
+# Копируем собранный код
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --chown=nodejs:nodejs package.json ./
+
+# Создаем директорию для сессий
+RUN mkdir -p /app/sessions && chown -R nodejs:nodejs /app/sessions
+
+# Объявляем volume
 VOLUME ["/app/sessions"]
 
+# Переключаемся на non-root пользователя
+USER nodejs
+
+# Expose port для healthcheck (если будет добавлен)
+# EXPOSE 3000
+
+# Healthcheck (проверка что процесс запущен)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('fs').statSync('/app/sessions')" || exit 1
+
+# Запуск приложения
 CMD ["node", "dist/main.js"]

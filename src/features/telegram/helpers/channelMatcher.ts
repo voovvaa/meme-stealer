@@ -1,6 +1,9 @@
 import { isNumericId, normalizeChannelUsername } from "../../../utils/helpers.js";
 
-export const ensureChannelAllowed = (specifiers: string[]) => {
+/**
+ * Создает функцию-предикат для проверки, разрешен ли канал
+ */
+export const createChannelMatcher = (specifiers: string[]) => {
   const idSet = new Set<string>();
   const usernameSet = new Set<string>();
 
