@@ -1,29 +1,37 @@
 import { Api, type TelegramClient } from "telegram";
-import { CustomFile } from "telegram/client/uploads.js";
 import { NewMessage, type NewMessageEvent } from "telegram/events/index.js";
 
 import { buildAdFilter } from "./adFilter.js";
 import { env } from "../../../core/config/env.js";
-import { memeRepository } from "../../../core/db/index.js";
+import { memeRepository } from "../../../core/db/memeRepository.js";
 import { logger } from "../../../core/logger.js";
-import { hashBufferSHA256 } from "../../../utils/hash.js";
-import { ensureChannelAllowed } from "../helpers/channelMatcher.js";
+import { createChannelMatcher } from "../helpers/channelMatcher.js";
+import { extractMediaFiles } from "../services/mediaExtractor.js";
+import { checkForDuplicates } from "../services/deduplicator.js";
+import { sendMediaFiles } from "../services/mediaSender.js";
+import { CONTENT_PREVIEW_LENGTH } from "../../../core/constants.js";
 
 const isAdContent = buildAdFilter(env.adKeywords);
-const channelMatcher = ensureChannelAllowed(env.sourceChannelIds);
+const channelMatcher = createChannelMatcher(env.sourceChannelIds);
 
-type MediaFile = {
-  buffer: Buffer;
-  fileName: string;
-  mimeType?: string;
+type ChannelMeta = {
+  id: bigInt.BigInteger;
+  username: string | null;
+  title: string;
 };
 
+/**
+ * Извлекает предварительный просмотр контента сообщения
+ */
 const extractContentPreview = (event: NewMessageEvent): string => {
   const text = event.message.message ?? event.message.rawText ?? "";
-  return text.slice(0, 120);
+  return text.slice(0, CONTENT_PREVIEW_LENGTH);
 };
 
-const resolveChannelMeta = async (event: NewMessageEvent) => {
+/**
+ * Разрешает метаданные канала из события
+ */
+const resolveChannelMeta = async (event: NewMessageEvent): Promise<ChannelMeta | null> => {
   const chat = await event.message.getChat();
 
   if (!chat || !(chat instanceof Api.Channel)) {
@@ -37,216 +45,115 @@ const resolveChannelMeta = async (event: NewMessageEvent) => {
   };
 };
 
-const isImageDocument = (document: Api.TypeDocument): document is Api.Document => {
-  if (!(document instanceof Api.Document)) {
-    return false;
+/**
+ * Обрабатывает входящее сообщение из канала
+ */
+const handleChannelPost = async (client: TelegramClient, event: NewMessageEvent) => {
+  const channelMeta = await resolveChannelMeta(event);
+
+  if (!channelMeta) {
+    logger.debug("Сообщение получено не из канала, пропуск");
+    return;
   }
 
-  const mime = document.mimeType ?? "";
-  return mime.startsWith("image/");
-};
-
-const resolveFileName = (document: Api.Document, fallback: string): string => {
-  for (const attr of document.attributes ?? []) {
-    if (attr instanceof Api.DocumentAttributeFilename) {
-      return attr.fileName;
-    }
+  if (!channelMatcher(channelMeta.id.toString(), channelMeta.username)) {
+    logger.debug(
+      { channelId: channelMeta.id, username: channelMeta.username },
+      "Источник не входит в белый список, пропуск",
+    );
+    return;
   }
 
-  return fallback;
-};
+  const content = event.message.message ?? "";
+  const caption = event.message.media ? content : null;
 
-const extractMediaFiles = async (
-  client: TelegramClient,
-  event: NewMessageEvent,
-): Promise<MediaFile[]> => {
-  const media = event.message.media;
-  if (!media) {
-    return [];
-  }
-
-  if (media instanceof Api.MessageMediaPhoto && media.photo) {
-    const buffer = await client.downloadMedia(event.message, {});
-    if (!buffer) {
-      return [];
-    }
-
-    return [
+  if (isAdContent(content, caption)) {
+    logger.info(
       {
-        buffer: Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer),
-        fileName: `photo_${event.message.id}.jpg`,
-        mimeType: "image/jpeg",
+        channelId: channelMeta.id,
+        username: channelMeta.username,
+        preview: extractContentPreview(event),
       },
-    ];
+      "Объявление распознано как реклама и пропущено",
+    );
+    return;
   }
 
-  if (media instanceof Api.MessageMediaDocument && media.document) {
-    if (!isImageDocument(media.document)) {
-      return [];
+  try {
+    const mediaFiles = await extractMediaFiles(client, event);
+
+    if (!mediaFiles.length) {
+      logger.debug(
+        {
+          messageId: event.message.id,
+          channelId: channelMeta.id,
+        },
+        "Сообщение не содержит поддерживаемого медиа, пропуск",
+      );
+      return;
     }
 
-    const buffer = await client.downloadMedia(event.message, {});
-    if (!buffer) {
-      return [];
-    }
-
-    const document = media.document;
-    const fallbackName = `image_${event.message.id}`;
-    const fileName = resolveFileName(document, fallbackName);
-
-    return [
+    const { newFiles, duplicateCount } = checkForDuplicates(
+      mediaFiles,
+      memeRepository.hasHash,
       {
-        buffer: Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer),
-        fileName,
-        mimeType: document.mimeType ?? undefined,
+        messageId: event.message.id,
+        channel: channelMeta.username ?? channelMeta.id.toString(),
       },
-    ];
-  }
+    );
 
-  return [];
+    if (!newFiles.length) {
+      logger.info(
+        {
+          messageId: event.message.id,
+          channelId: channelMeta.id,
+          duplicateCount,
+        },
+        "Все вложения оказались дублями, сообщение пропущено",
+      );
+      return;
+    }
+
+    const uploadResults = await sendMediaFiles(client, env.targetChannelId, newFiles);
+
+    const sourceChannelId = String(channelMeta.id);
+
+    for (const result of uploadResults) {
+      memeRepository.save({
+        hash: result.hash,
+        sourceChannelId,
+        sourceMessageId: event.message.id,
+        targetMessageId: result.targetMessageId,
+      });
+    }
+
+    logger.info(
+      {
+        from: channelMeta.username ?? channelMeta.id,
+        to: env.targetChannelId,
+        messageId: event.message.id,
+        uploadedCount: uploadResults.length,
+      },
+      "Новые медиа опубликованы в целевом канале",
+    );
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        messageId: event.message.id,
+        channelId: channelMeta.id,
+      },
+      "Ошибка при пересылке сообщения",
+    );
+  }
 };
 
+/**
+ * Регистрирует обработчик постов из каналов
+ */
 export const registerChannelPostHandler = (client: TelegramClient) => {
   client.addEventHandler(
-    async (event) => {
-      const channelMeta = await resolveChannelMeta(event);
-
-      if (!channelMeta) {
-        logger.debug("Сообщение получено не из канала, пропуск");
-        return;
-      }
-
-      if (!channelMatcher(channelMeta.id.toString(), channelMeta.username)) {
-        logger.debug(
-          { channelId: channelMeta.id, username: channelMeta.username },
-          "Источник не входит в белый список, пропуск",
-        );
-        return;
-      }
-
-      const content = event.message.message ?? "";
-      const caption = event.message.media ? content : null;
-
-      if (isAdContent(content, caption)) {
-        logger.info(
-          {
-            channelId: channelMeta.id,
-            username: channelMeta.username,
-            preview: extractContentPreview(event),
-          },
-          "Объявление распознано как реклама и пропущено",
-        );
-        return;
-      }
-
-      try {
-        const mediaFiles = await extractMediaFiles(client, event);
-
-        if (!mediaFiles.length) {
-          logger.debug(
-            {
-              messageId: event.message.id,
-              channelId: channelMeta.id,
-            },
-            "Сообщение не содержит поддерживаемого медиа, пропуск",
-          );
-          return;
-        }
-
-        const hashedFiles = mediaFiles.map((file) => ({
-          ...file,
-          hash: hashBufferSHA256(file.buffer),
-        }));
-
-        const seenHashes = new Set<string>();
-        const newMedia: Array<MediaFile & { hash: string }> = [];
-
-        for (const file of hashedFiles) {
-          if (seenHashes.has(file.hash)) {
-            logger.debug({ hash: file.hash }, "Дубликат в рамках сообщения, пропуск");
-            continue;
-          }
-
-          seenHashes.add(file.hash);
-
-          if (memeRepository.hasHash(file.hash)) {
-            logger.info(
-              {
-                hash: file.hash,
-                sourceMessageId: event.message.id,
-                sourceChannel: channelMeta.username ?? channelMeta.id,
-              },
-              "Найден ранее опубликованный мем, пропуск",
-            );
-            continue;
-          }
-
-          newMedia.push(file);
-        }
-
-        if (!newMedia.length) {
-          logger.info(
-            {
-              messageId: event.message.id,
-              channelId: channelMeta.id,
-            },
-            "Все вложения оказались дублями, сообщение пропущено",
-          );
-          return;
-        }
-
-        const sourceChannelId = String(channelMeta.id);
-
-        for (const [, file] of newMedia.entries()) {
-          const forceDocument = Boolean(file.mimeType && !file.mimeType.startsWith("image/"));
-
-          const customFile = new CustomFile(file.fileName, file.buffer.byteLength, "", file.buffer);
-
-          const sendFileOptions: Parameters<TelegramClient["sendFile"]>[1] = {
-            file: customFile,
-            forceDocument,
-            workers: 1,
-          };
-
-          if (forceDocument) {
-            sendFileOptions.attributes = [
-              new Api.DocumentAttributeFilename({
-                fileName: file.fileName,
-              }),
-            ];
-          }
-
-          const sentMessage = await client.sendFile(env.targetChannelId, sendFileOptions);
-          const targetMessageId = sentMessage.id;
-
-          memeRepository.save({
-            hash: file.hash,
-            sourceChannelId,
-            sourceMessageId: event.message.id,
-            targetMessageId,
-          });
-        }
-
-        logger.info(
-          {
-            from: channelMeta.username ?? channelMeta.id,
-            to: env.targetChannelId,
-            messageId: event.message.id,
-            uploadedCount: newMedia.length,
-          },
-          "Новые медиа опубликованы в целевом канале",
-        );
-      } catch (error) {
-        logger.error(
-          {
-            err: error,
-            messageId: event.message.id,
-            channelId: channelMeta.id,
-          },
-          "Ошибка при пересылке сообщения",
-        );
-      }
-    },
+    (event) => handleChannelPost(client, event),
     new NewMessage({
       chats: env.sourceChannelIds,
     }),

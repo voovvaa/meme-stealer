@@ -12,3 +12,9 @@ export const normalizeChannelUsername = (value: string): string =>
   value.replace(/^@/, "").toLowerCase();
 
 export const isNumericId = (value: string): boolean => /^-?\d+$/.test(value);
+
+/**
+ * Гарантирует, что данные представлены в виде Buffer
+ */
+export const ensureBuffer = (data: Buffer | Uint8Array): Buffer =>
+  Buffer.isBuffer(data) ? data : Buffer.from(data);
