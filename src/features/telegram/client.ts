@@ -60,8 +60,24 @@ const ensureAuthorization = async (client: TelegramClient) => {
 
 export const initTelegramClient = async (): Promise<TelegramClient> => {
   const sessionString = await loadSessionString(env.sessionStoragePath);
+  logger.info(
+    { path: env.sessionStoragePath, hasSession: sessionString.length > 0 },
+    "Загружаем строку сессии MTProto",
+  );
+
+  if (sessionString.length === 0) {
+    logger.warn(
+      { path: env.sessionStoragePath },
+      "Сохранённая сессия не найдена. Потребуется интерактивная авторизация.",
+    );
+  } else {
+    logger.info("Используем ранее сохранённую сессию MTProto.");
+  }
+
   const { client, stringSession } = createClientInstance(sessionString);
   client.setLogLevel(LogLevel.WARN);
+
+  logger.info("Запускаем авторизацию MTProto клиента…");
 
   await ensureAuthorization(client);
 
