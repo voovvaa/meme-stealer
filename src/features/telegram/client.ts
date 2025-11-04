@@ -13,7 +13,11 @@ const createClientInstance = (
 ): { client: TelegramClient; stringSession: StringSession } => {
   const stringSession = new StringSession(sessionString);
   const client = new TelegramClient(stringSession, env.apiId, env.apiHash, {
-    connectionRetries: 5,
+    connectionRetries: 10,
+    requestRetries: 5,
+    retryDelay: 2000,
+    autoReconnect: true,
+    timeout: 30,
   });
 
   return { client, stringSession };
