@@ -3,7 +3,7 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+# package-lock.json - ДОЛЖЕН быть включен для детерминированной установки зависимостей
 
 # Build output
 dist
