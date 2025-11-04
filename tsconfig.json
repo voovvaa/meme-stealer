@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": false,
     "noEmit": true,
     "strict": true,
@@ -10,8 +10,11 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["bun-types"],
-    "baseUrl": "./src"
+    "types": ["node"],
+    "baseUrl": "./src",
+    "paths": {
+      "telegram/*": ["../node_modules/telegram/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "src/types"]
 }

@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/main.ts",
-    "build": "bun build --target bun src/main.ts --outdir dist",
+    "dev": "tsx src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,js}\"",
     "format": "prettier --write \"src/**/*.{ts,js}\""
   },
   "dependencies": {
+    "better-sqlite3": "^11.7.0",
     "dotenv-flow": "^4.1.0",
     "pino": "^9.3.1",
     "telegram": "^2.26.8",
@@ -18,12 +20,12 @@
     "@types/node": "^22.9.0",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
-    "bun-types": "latest",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-unused-imports": "^4.1.4",
     "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
 }

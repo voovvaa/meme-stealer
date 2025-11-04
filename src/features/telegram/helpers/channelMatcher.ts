@@ -1,4 +1,4 @@
-import { isNumericId, normalizeChannelUsername } from "../../../utils/helpers";
+import { isNumericId, normalizeChannelUsername } from "../../../utils/helpers.js";
 
 export const ensureChannelAllowed = (specifiers: string[]) => {
   const idSet = new Set<string>();

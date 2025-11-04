@@ -1,27 +1,34 @@
-# ---------- СТАДИЯ 1: УСТАНОВКА ЗАВИСИМОСТЕЙ ----------
-FROM oven/bun:latest AS deps
+# ---------- STAGE 1: DEPENDENCIES ----------
+FROM node:20-bullseye-slim AS deps
 
 WORKDIR /app
 
-# Кешируем зависимости
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 build-essential \
+  && rm -rf /var/lib/apt/lists/*
 
+COPY package*.json ./
+RUN npm install
 
-# ---------- СТАДИЯ 2: ПРОДАКШН ----------
-FROM oven/bun:latest AS runner
+# ---------- STAGE 2: BUILD ----------
+FROM deps AS builder
 
-WORKDIR /app
-
-# Копируем зависимости (node_modules/bun_modules)
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/bun.lock ./bun.lock
-COPY --from=deps /app/package.json ./package.json
-
-# Копируем исходники
 COPY . .
+RUN npm run build
+
+# ---------- STAGE 3: RUNTIME ----------
+FROM node:20-bullseye-slim AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+COPY --from=deps /app/node_modules ./node_modules
+RUN npm prune --omit=dev
+
+COPY --from=builder /app/dist ./dist
 
 RUN mkdir -p /app/sessions
 VOLUME ["/app/sessions"]
 
-CMD ["bun", "src/main.ts"]
+CMD ["node", "dist/main.js"]

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "fs/promises";
 
-import { ensureDirectoryForFile } from "../../../utils/helpers";
+import { ensureDirectoryForFile } from "../../../utils/helpers.js";
 
 export const loadSessionString = async (path: string): Promise<string> => {
   try {

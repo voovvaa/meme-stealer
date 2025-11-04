@@ -1,17 +1,17 @@
-import { Database } from "bun:sqlite";
+import Database from "better-sqlite3";
 
-import { ensureDirectoryForFile } from "../../utils/helpers";
-import { env } from "../config/env";
-import { logger } from "../logger";
+import { ensureDirectoryForFile } from "../../utils/helpers.js";
+import { env } from "../config/env.js";
+import { logger } from "../logger.js";
 
 ensureDirectoryForFile(env.memeDbPath);
 
 const db = new Database(env.memeDbPath, {
-  create: true,
-  readwrite: true
+  readonly: false,
+  fileMustExist: false
 });
 
-db.exec("PRAGMA journal_mode = WAL;");
+db.pragma("journal_mode = WAL;");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS memes (

@@ -1,12 +1,12 @@
 import { TelegramClient } from "telegram";
-import { LogLevel } from "telegram/extensions/Logger";
-import { StringSession } from "telegram/sessions";
+import type { LogLevel } from "telegram/extensions/Logger";
+import { StringSession } from "telegram/sessions/index.js";
 
-import { registerChannelPostHandler } from "./handlers/postHandler";
-import { ask } from "./helpers/prompt";
-import { loadSessionString, saveSessionString } from "./helpers/sessionStorage";
-import { env } from "../../core/config/env";
-import { logger } from "../../core/logger";
+import { registerChannelPostHandler } from "./handlers/postHandler.js";
+import { ask } from "./helpers/prompt.js";
+import { loadSessionString, saveSessionString } from "./helpers/sessionStorage.js";
+import { env } from "../../core/config/env.js";
+import { logger } from "../../core/logger.js";
 
 const createClientInstance = (
   sessionString: string,
@@ -60,24 +60,8 @@ const ensureAuthorization = async (client: TelegramClient) => {
 
 export const initTelegramClient = async (): Promise<TelegramClient> => {
   const sessionString = await loadSessionString(env.sessionStoragePath);
-  logger.info(
-    { path: env.sessionStoragePath, hasSession: sessionString.length > 0 },
-    "Загружаем строку сессии MTProto",
-  );
-
-  if (sessionString.length === 0) {
-    logger.warn(
-      { path: env.sessionStoragePath },
-      "Сохранённая сессия не найдена. Потребуется интерактивная авторизация.",
-    );
-  } else {
-    logger.info("Используем ранее сохранённую сессию MTProto.");
-  }
-
   const { client, stringSession } = createClientInstance(sessionString);
-  client.setLogLevel(LogLevel.WARN);
-
-  logger.info("Запускаем авторизацию MTProto клиента…");
+  client.setLogLevel("warn" as LogLevel);
 
   await ensureAuthorization(client);
 

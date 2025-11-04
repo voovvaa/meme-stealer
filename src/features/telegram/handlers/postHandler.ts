@@ -1,13 +1,13 @@
 import { Api, type TelegramClient } from "telegram";
-import { CustomFile } from "telegram/client/uploads";
-import { NewMessage, type NewMessageEvent } from "telegram/events";
+import { CustomFile } from "telegram/client/uploads.js";
+import { NewMessage, type NewMessageEvent } from "telegram/events/index.js";
 
-import { buildAdFilter } from "./adFilter";
-import { env } from "../../../core/config/env";
-import { memeRepository } from "../../../core/db";
-import { logger } from "../../../core/logger";
-import { hashBufferSHA256 } from "../../../utils/hash";
-import { ensureChannelAllowed } from "../helpers/channelMatcher";
+import { buildAdFilter } from "./adFilter.js";
+import { env } from "../../../core/config/env.js";
+import { memeRepository } from "../../../core/db/index.js";
+import { logger } from "../../../core/logger.js";
+import { hashBufferSHA256 } from "../../../utils/hash.js";
+import { ensureChannelAllowed } from "../helpers/channelMatcher.js";
 
 const isAdContent = buildAdFilter(env.adKeywords);
 const channelMatcher = ensureChannelAllowed(env.sourceChannelIds);

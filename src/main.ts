@@ -1,5 +1,5 @@
-import { logger } from "./core/logger";
-import { initTelegramClient } from "./features/telegram/client";
+import { logger } from "./core/logger.js";
+import { initTelegramClient } from "./features/telegram/client.js";
 
 const run = async () => {
   await initTelegramClient();
