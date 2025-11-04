@@ -26,7 +26,17 @@ const splitEnvList = (value?: string): string[] =>
         .filter((item) => item.length > 0)
     : [];
 
-const raw = RawEnvSchema.parse(process.env);
+const parseEnv = () => {
+  try {
+    return RawEnvSchema.parse(process.env);
+  } catch (error) {
+    console.error("Не удалось считать переменные окружения:");
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+const raw = parseEnv();
 
 const EnvSchema = z.object({
   apiId: z.number().int().positive(),
@@ -41,23 +51,33 @@ const EnvSchema = z.object({
   memeDbPath: z.string()
 });
 
-const parsed = EnvSchema.parse({
-  apiId: Number(raw.API_ID),
-  apiHash: raw.API_HASH,
-  phoneNumber: raw.PHONE_NUMBER,
-  telegramPassword: raw.TELEGRAM_PASSWORD && raw.TELEGRAM_PASSWORD.length > 0
-    ? raw.TELEGRAM_PASSWORD
-    : undefined,
-  targetChannelId: raw.TARGET_CHANNEL_ID,
-  sourceChannelIds: splitEnvList(raw.SOURCE_CHANNEL_IDS),
-  adKeywords: splitEnvList(raw.AD_KEYWORDS),
-  logLevel:
-    (raw.LOG_LEVEL && logLevels.includes(raw.LOG_LEVEL as (typeof logLevels)[number])
-      ? raw.LOG_LEVEL
-      : undefined) ?? "info",
-  sessionStoragePath: raw.SESSION_STORAGE_PATH ?? "./sessions/client.session",
-  memeDbPath: raw.MEME_DB_PATH ?? "./sessions/memes.sqlite"
-});
+const parseStructuredEnv = () => {
+  try {
+    return EnvSchema.parse({
+      apiId: Number(raw.API_ID),
+      apiHash: raw.API_HASH,
+      phoneNumber: raw.PHONE_NUMBER,
+      telegramPassword: raw.TELEGRAM_PASSWORD && raw.TELEGRAM_PASSWORD.length > 0
+        ? raw.TELEGRAM_PASSWORD
+        : undefined,
+      targetChannelId: raw.TARGET_CHANNEL_ID,
+      sourceChannelIds: splitEnvList(raw.SOURCE_CHANNEL_IDS),
+      adKeywords: splitEnvList(raw.AD_KEYWORDS),
+      logLevel:
+        (raw.LOG_LEVEL && logLevels.includes(raw.LOG_LEVEL as (typeof logLevels)[number])
+          ? raw.LOG_LEVEL
+          : undefined) ?? "info",
+      sessionStoragePath: raw.SESSION_STORAGE_PATH ?? "./sessions/client.session",
+      memeDbPath: raw.MEME_DB_PATH ?? "./sessions/memes.sqlite"
+    });
+  } catch (error) {
+    console.error("Переменные окружения не проходят валидацию:");
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+const parsed = parseStructuredEnv();
 
 export const env = parsed;
 
