@@ -10,6 +10,7 @@ import { createChannelMatcher } from "../helpers/channelMatcher.js";
 import { checkForDuplicates } from "../services/deduplicator.js";
 import { extractMediaFiles } from "../services/mediaExtractor.js";
 import { sendMediaFiles } from "../services/mediaSender.js";
+import type { PostQueue } from "../services/postQueue.js";
 
 const isAdContent = buildAdFilter(env.adKeywords);
 const channelMatcher = createChannelMatcher(env.sourceChannelIds);
@@ -48,7 +49,11 @@ const resolveChannelMeta = async (event: NewMessageEvent): Promise<ChannelMeta |
 /**
  * Обрабатывает входящее сообщение из канала
  */
-const handleChannelPost = async (client: TelegramClient, event: NewMessageEvent) => {
+const handleChannelPost = async (
+  client: TelegramClient,
+  event: NewMessageEvent,
+  postQueue?: PostQueue,
+) => {
   const channelMeta = await resolveChannelMeta(event);
 
   if (!channelMeta) {
@@ -110,28 +115,43 @@ const handleChannelPost = async (client: TelegramClient, event: NewMessageEvent)
       return;
     }
 
-    const uploadResults = await sendMediaFiles(client, env.targetChannelId, newFiles);
-
     const sourceChannelId = String(channelMeta.id);
 
-    for (const result of uploadResults) {
-      memeRepository.save({
-        hash: result.hash,
-        sourceChannelId,
-        sourceMessageId: event.message.id,
-        targetMessageId: result.targetMessageId,
-      });
-    }
+    // Если очередь включена, добавляем в очередь
+    if (env.enableQueue && postQueue) {
+      postQueue.enqueueMedia(newFiles, sourceChannelId, event.message.id);
 
-    logger.info(
-      {
-        from: channelMeta.username ?? channelMeta.id,
-        to: env.targetChannelId,
-        messageId: event.message.id,
-        uploadedCount: uploadResults.length,
-      },
-      "Новые медиа опубликованы в целевом канале",
-    );
+      logger.info(
+        {
+          from: channelMeta.username ?? channelMeta.id,
+          messageId: event.message.id,
+          enqueuedCount: newFiles.length,
+        },
+        "Медиа добавлено в очередь для отложенной публикации",
+      );
+    } else {
+      // Иначе публикуем сразу (старое поведение)
+      const uploadResults = await sendMediaFiles(client, env.targetChannelId, newFiles);
+
+      for (const result of uploadResults) {
+        memeRepository.save({
+          hash: result.hash,
+          sourceChannelId,
+          sourceMessageId: event.message.id,
+          targetMessageId: result.targetMessageId,
+        });
+      }
+
+      logger.info(
+        {
+          from: channelMeta.username ?? channelMeta.id,
+          to: env.targetChannelId,
+          messageId: event.message.id,
+          uploadedCount: uploadResults.length,
+        },
+        "Новые медиа опубликованы в целевом канале",
+      );
+    }
   } catch (error) {
     logger.error(
       {
@@ -147,9 +167,9 @@ const handleChannelPost = async (client: TelegramClient, event: NewMessageEvent)
 /**
  * Регистрирует обработчик постов из каналов
  */
-export const registerChannelPostHandler = (client: TelegramClient) => {
+export const registerChannelPostHandler = (client: TelegramClient, postQueue?: PostQueue) => {
   client.addEventHandler(
-    (event) => handleChannelPost(client, event),
+    (event) => handleChannelPost(client, event, postQueue),
     new NewMessage({
       chats: env.sourceChannelIds,
     }),

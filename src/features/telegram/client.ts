@@ -5,6 +5,7 @@ import { StringSession } from "telegram/sessions/index.js";
 import { registerChannelPostHandler } from "./handlers/postHandler.js";
 import { ask } from "./helpers/prompt.js";
 import { loadSessionString, saveSessionString } from "./helpers/sessionStorage.js";
+import { PostQueue } from "./services/postQueue.js";
 import { env } from "../../core/config/env.js";
 import { TELEGRAM_CLIENT_CONFIG } from "../../core/constants.js";
 import { logger } from "../../core/logger.js";
@@ -76,7 +77,23 @@ export const initTelegramClient = async (): Promise<TelegramClient> => {
     logger.debug({ path: env.sessionStoragePath }, "Сессия обновлена и сохранена");
   }
 
-  registerChannelPostHandler(client);
+  // Инициализируем и запускаем очередь публикаций, если включена
+  let postQueue: PostQueue | undefined;
+  if (env.enableQueue) {
+    postQueue = new PostQueue(client);
+    postQueue.start();
+    logger.info(
+      {
+        intervalMin: env.publishIntervalMin,
+        intervalMax: env.publishIntervalMax,
+      },
+      "Очередь публикаций включена и запущена",
+    );
+  } else {
+    logger.info("Очередь публикаций отключена, посты будут публиковаться немедленно");
+  }
+
+  registerChannelPostHandler(client, postQueue);
 
   const allowedSources = env.sourceChannelIds.map((x) => x.toString());
   logger.info({ sources: allowedSources, target: env.targetChannelId }, "MTProto клиент запущен.");
