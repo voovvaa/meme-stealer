@@ -1,11 +1,29 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
 .env
-sessions/
-*.log
-.idea
-memes.sqlite
 .env.local
 .env.*.local
-node_modules/
-dist/
+
+# Sessions and database
+sessions/
+*.sqlite
+memes.sqlite
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
