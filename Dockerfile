@@ -49,6 +49,12 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /app
 
+# Устанавливаем gosu для безопасного переключения пользователя
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends gosu \
+  && rm -rf /var/lib/apt/lists/* \
+  && gosu nobody true
+
 # Создаем non-root пользователя для безопасности
 RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 
@@ -63,14 +69,15 @@ COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --chown=nodejs:nodejs package.json ./
 
+# Копируем entrypoint скрипт
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Создаем директорию для сессий
 RUN mkdir -p /app/sessions && chown -R nodejs:nodejs /app/sessions
 
 # Объявляем volume
 VOLUME ["/app/sessions"]
-
-# Переключаемся на non-root пользователя
-USER nodejs
 
 # Expose port для healthcheck (если будет добавлен)
 # EXPOSE 3000
@@ -79,5 +86,5 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('fs').statSync('/app/sessions')" || exit 1
 
-# Запуск приложения
-CMD ["node", "dist/main.js"]
+# Используем entrypoint для установки прав доступа
+ENTRYPOINT ["docker-entrypoint.sh"]
