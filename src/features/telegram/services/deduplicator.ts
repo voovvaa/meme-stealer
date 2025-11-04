@@ -1,6 +1,6 @@
+import { logger } from "../../../core/logger.js";
 import type { MediaFile, HashedMediaFile } from "../../../types/media.js";
 import { hashBufferSHA256 } from "../../../utils/hash.js";
-import { logger } from "../../../core/logger.js";
 
 export type DuplicateCheckResult = {
   newFiles: HashedMediaFile[];

@@ -1,8 +1,8 @@
 import { Api, type TelegramClient } from "telegram";
 import { CustomFile } from "telegram/client/uploads.js";
 
-import type { HashedMediaFile } from "../../../types/media.js";
 import { UPLOAD_WORKERS } from "../../../core/constants.js";
+import type { HashedMediaFile } from "../../../types/media.js";
 
 export type MediaUploadResult = {
   targetMessageId: number;

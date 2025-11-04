@@ -5,5 +5,5 @@ import { env } from "./config/env.js";
 export const logger = pino({
   level: env.logLevel,
   base: undefined,
-  timestamp: pino.stdTimeFunctions.isoTime
+  timestamp: pino.stdTimeFunctions.isoTime,
 });

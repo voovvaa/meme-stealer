@@ -8,7 +8,7 @@ ensureDirectoryForFile(env.memeDbPath);
 
 const db = new Database(env.memeDbPath, {
   readonly: false,
-  fileMustExist: false
+  fileMustExist: false,
 });
 
 db.pragma("journal_mode = WAL;");
@@ -39,7 +39,7 @@ const insertStmt = db.prepare(
       created_at
     )
     VALUES (?, ?, ?, ?, ?)
-  `
+  `,
 );
 
 export type MemeRecordInput = {
@@ -61,7 +61,7 @@ export const memeRepository = {
         record.sourceChannelId,
         record.sourceMessageId,
         record.targetMessageId,
-        new Date().toISOString()
+        new Date().toISOString(),
       );
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
@@ -71,5 +71,5 @@ export const memeRepository = {
 
       throw error;
     }
-  }
+  },
 };

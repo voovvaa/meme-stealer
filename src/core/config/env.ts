@@ -37,9 +37,7 @@ const EnvSchema = z
     apiHash: raw.API_HASH,
     phoneNumber: raw.PHONE_NUMBER,
     telegramPassword:
-      raw.TELEGRAM_PASSWORD && raw.TELEGRAM_PASSWORD.length > 0
-        ? raw.TELEGRAM_PASSWORD
-        : undefined,
+      raw.TELEGRAM_PASSWORD && raw.TELEGRAM_PASSWORD.length > 0 ? raw.TELEGRAM_PASSWORD : undefined,
     targetChannelId: raw.TARGET_CHANNEL_ID,
     sourceChannelIds: splitEnvList(raw.SOURCE_CHANNEL_IDS),
     adKeywords: splitEnvList(raw.AD_KEYWORDS),

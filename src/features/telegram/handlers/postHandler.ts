@@ -3,13 +3,13 @@ import { NewMessage, type NewMessageEvent } from "telegram/events/index.js";
 
 import { buildAdFilter } from "./adFilter.js";
 import { env } from "../../../core/config/env.js";
+import { CONTENT_PREVIEW_LENGTH } from "../../../core/constants.js";
 import { memeRepository } from "../../../core/db/memeRepository.js";
 import { logger } from "../../../core/logger.js";
 import { createChannelMatcher } from "../helpers/channelMatcher.js";
-import { extractMediaFiles } from "../services/mediaExtractor.js";
 import { checkForDuplicates } from "../services/deduplicator.js";
+import { extractMediaFiles } from "../services/mediaExtractor.js";
 import { sendMediaFiles } from "../services/mediaSender.js";
-import { CONTENT_PREVIEW_LENGTH } from "../../../core/constants.js";
 
 const isAdContent = buildAdFilter(env.adKeywords);
 const channelMatcher = createChannelMatcher(env.sourceChannelIds);
@@ -93,14 +93,10 @@ const handleChannelPost = async (client: TelegramClient, event: NewMessageEvent)
       return;
     }
 
-    const { newFiles, duplicateCount } = checkForDuplicates(
-      mediaFiles,
-      memeRepository.hasHash,
-      {
-        messageId: event.message.id,
-        channel: channelMeta.username ?? channelMeta.id.toString(),
-      },
-    );
+    const { newFiles, duplicateCount } = checkForDuplicates(mediaFiles, memeRepository.hasHash, {
+      messageId: event.message.id,
+      channel: channelMeta.username ?? channelMeta.id.toString(),
+    });
 
     if (!newFiles.length) {
       logger.info(

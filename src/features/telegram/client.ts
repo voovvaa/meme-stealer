@@ -6,8 +6,8 @@ import { registerChannelPostHandler } from "./handlers/postHandler.js";
 import { ask } from "./helpers/prompt.js";
 import { loadSessionString, saveSessionString } from "./helpers/sessionStorage.js";
 import { env } from "../../core/config/env.js";
-import { logger } from "../../core/logger.js";
 import { TELEGRAM_CLIENT_CONFIG } from "../../core/constants.js";
+import { logger } from "../../core/logger.js";
 
 const createClientInstance = (
   sessionString: string,
