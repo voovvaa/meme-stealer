@@ -12,6 +12,10 @@ services:
 
     restart: unless-stopped
 
+    # Для интерактивного ввода кода авторизации
+    stdin_open: true
+    tty: true
+
     volumes:
       - ./sessions:/app/sessions
       - ./media:/app/media
