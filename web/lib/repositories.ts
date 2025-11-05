@@ -338,4 +338,38 @@ export const statsRepository = {
     };
     return row.count;
   },
+
+  getChannelStats(): Array<{ channelId: string; channelName: string | null; count: number }> {
+    const db = getDb();
+    const rows = db
+      .prepare(`
+        SELECT
+          m.source_channel_id as channelId,
+          sc.channel_name as channelName,
+          COUNT(*) as count
+        FROM memes m
+        LEFT JOIN source_channels sc ON m.source_channel_id = sc.channel_id
+        GROUP BY m.source_channel_id
+        ORDER BY count DESC
+        LIMIT 10
+      `)
+      .all() as Array<{ channelId: string; channelName: string | null; count: number }>;
+    return rows;
+  },
+
+  getTimelineStats(days: number = 30): Array<{ date: string; count: number }> {
+    const db = getDb();
+    const rows = db
+      .prepare(`
+        SELECT
+          DATE(created_at) as date,
+          COUNT(*) as count
+        FROM memes
+        WHERE created_at >= datetime('now', '-' || ? || ' days')
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+      `)
+      .all(days) as Array<{ date: string; count: number }>;
+    return rows;
+  },
 };

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, CheckCircle2, Clock } from "lucide-react";
+import { ChannelActivityChart } from "@/components/charts/channel-activity-chart";
+import { PublicationsTimelineChart } from "@/components/charts/publications-timeline-chart";
 
 type Stats = {
   total: number;
@@ -86,6 +88,12 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Графики */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <PublicationsTimelineChart />
+        <ChannelActivityChart />
       </div>
 
       <Card>
