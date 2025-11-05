@@ -65,16 +65,22 @@ const ensureAuthorization = async (client: TelegramClient) => {
 };
 
 export const initTelegramClient = async (): Promise<TelegramClient> => {
+  logger.info("Начинаем инициализацию Telegram клиента...");
+
   const sessionString = await loadSessionString(env.sessionStoragePath);
+  logger.info({ hasSession: sessionString.length > 0 }, "Создаем инстанс клиента...");
+
   const { client, stringSession } = createClientInstance(sessionString);
   client.setLogLevel("warn" as LogLevel);
 
+  logger.info("Запускаем авторизацию...");
   await ensureAuthorization(client);
+  logger.info("Авторизация завершена");
 
   const newSession = stringSession.save();
   if (newSession && newSession !== sessionString) {
     await saveSessionString(env.sessionStoragePath, newSession);
-    logger.debug({ path: env.sessionStoragePath }, "Сессия обновлена и сохранена");
+    logger.info({ path: env.sessionStoragePath }, "Сессия обновлена и сохранена");
   }
 
   // Инициализируем и запускаем очередь публикаций, если включена
