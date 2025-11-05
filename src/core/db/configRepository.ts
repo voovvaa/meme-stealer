@@ -305,7 +305,7 @@ export const configRepository = {
   // Source channels operations
   getAllSourceChannels(): SourceChannel[] {
     const rows = getAllSourceChannelsStmt.all();
-    return rows.map((row) =>
+    return rows.map((row: any) =>
       rowToSourceChannel(
         row as {
           id: number;
@@ -321,7 +321,7 @@ export const configRepository = {
 
   getEnabledSourceChannels(): SourceChannel[] {
     const rows = getEnabledSourceChannelsStmt.all();
-    return rows.map((row) =>
+    return rows.map((row: any) =>
       rowToSourceChannel(
         row as {
           id: number;
@@ -382,7 +382,7 @@ export const configRepository = {
   // Filter keywords operations
   getAllFilterKeywords(): FilterKeyword[] {
     const rows = getAllFilterKeywordsStmt.all();
-    return rows.map((row) =>
+    return rows.map((row: any) =>
       rowToFilterKeyword(
         row as {
           id: number;
@@ -397,7 +397,7 @@ export const configRepository = {
 
   getEnabledFilterKeywords(): FilterKeyword[] {
     const rows = getEnabledFilterKeywordsStmt.all();
-    return rows.map((row) =>
+    return rows.map((row: any) =>
       rowToFilterKeyword(
         row as {
           id: number;
