@@ -30,35 +30,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_memes_source_channel ON memes(source_channel_id);
 `);
 
-// Ленивая инициализация prepared statements (создаются после миграций)
-let selectByHashStmt: ReturnType<typeof db.prepare> | null = null;
-let insertStmt: ReturnType<typeof db.prepare> | null = null;
-
-const getSelectByHashStmt = () => {
-  if (!selectByHashStmt) {
-    selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");
-  }
-  return selectByHashStmt;
-};
-
-const getInsertStmt = () => {
-  if (!insertStmt) {
-    insertStmt = db.prepare(
-      `
-      INSERT INTO memes (
-        hash,
-        source_channel_id,
-        source_message_id,
-        target_message_id,
-        file_path,
-        created_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-    `,
-    );
-  }
-  return insertStmt;
-};
+const selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");
+const insertStmt = db.prepare(
+  `
+    INSERT INTO memes (
+      hash,
+      source_channel_id,
+      source_message_id,
+      target_message_id,
+      file_path,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+  `,
+);
 
 export type MemeRecordInput = {
   hash: string;
@@ -70,12 +55,12 @@ export type MemeRecordInput = {
 
 export const memeRepository = {
   hasHash(hash: string): boolean {
-    return Boolean(getSelectByHashStmt().get(hash));
+    return Boolean(selectByHashStmt.get(hash));
   },
 
   save(record: MemeRecordInput): void {
     try {
-      getInsertStmt().run(
+      insertStmt.run(
         record.hash,
         record.sourceChannelId,
         record.sourceMessageId,
