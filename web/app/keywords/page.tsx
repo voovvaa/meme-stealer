@@ -12,6 +12,7 @@ type FilterKeyword = {
   id: number;
   keyword: string;
   enabled: boolean;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -115,8 +116,8 @@ export default function KeywordsPage() {
     }
   };
 
-  const handleDeleteKeyword = async (id: number) => {
-    if (!confirm("Вы уверены, что хотите удалить это ключевое слово?")) return;
+  const handleArchiveKeyword = async (id: number) => {
+    if (!confirm("Вы уверены, что хотите архивировать это ключевое слово?")) return;
 
     setActionLoading(true);
     try {
@@ -128,16 +129,44 @@ export default function KeywordsPage() {
         await loadKeywords();
         toast({
           title: "Успешно",
-          description: "Ключевое слово удалено",
+          description: "Ключевое слово архивировано",
         });
       } else {
-        throw new Error("Failed to delete keyword");
+        throw new Error("Failed to archive keyword");
       }
     } catch (error) {
-      console.error("Failed to delete keyword:", error);
+      console.error("Failed to archive keyword:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось удалить ключевое слово",
+        description: "Не удалось архивировать ключевое слово",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnarchiveKeyword = async (id: number) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/keywords/${id}/unarchive`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        await loadKeywords();
+        toast({
+          title: "Успешно",
+          description: "Ключевое слово восстановлено",
+        });
+      } else {
+        throw new Error("Failed to unarchive keyword");
+      }
+    } catch (error) {
+      console.error("Failed to unarchive keyword:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось восстановить ключевое слово",
         variant: "destructive",
       });
     } finally {
@@ -188,57 +217,105 @@ export default function KeywordsPage() {
             </form>
           )}
 
-          {keywords.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Нет добавленных ключевых слов
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ключевое слово</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Добавлено</TableHead>
-                  <TableHead className="text-right">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {keywords.map((keyword) => (
-                  <TableRow key={keyword.id}>
-                    <TableCell className="font-medium">
-                      {keyword.keyword}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={keyword.enabled ? "default" : "secondary"}>
-                        {keyword.enabled ? "Включен" : "Выключен"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(keyword.createdAt).toLocaleDateString("ru-RU")}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleEnabled(keyword)}
-                        disabled={actionLoading}
-                      >
-                        {keyword.enabled ? "Выключить" : "Включить"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteKeyword(keyword.id)}
-                        disabled={actionLoading}
-                      >
-                        Удалить
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {/* Активные ключевые слова */}
+          {(() => {
+            const activeKeywords = keywords.filter((k) => !k.archived);
+            const archivedKeywords = keywords.filter((k) => k.archived);
+
+            return (
+              <>
+                {activeKeywords.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Нет добавленных ключевых слов
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ключевое слово</TableHead>
+                        <TableHead>Статус</TableHead>
+                        <TableHead>Добавлено</TableHead>
+                        <TableHead className="text-right">Действия</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeKeywords.map((keyword) => (
+                        <TableRow key={keyword.id}>
+                          <TableCell className="font-medium">
+                            {keyword.keyword}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={keyword.enabled ? "default" : "secondary"}>
+                              {keyword.enabled ? "Включен" : "Выключен"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(keyword.createdAt).toLocaleDateString("ru-RU")}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleEnabled(keyword)}
+                              disabled={actionLoading}
+                            >
+                              {keyword.enabled ? "Выключить" : "Включить"}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleArchiveKeyword(keyword.id)}
+                              disabled={actionLoading}
+                            >
+                              Архивировать
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                {/* Архив */}
+                {archivedKeywords.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Архив</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ключевое слово</TableHead>
+                          <TableHead>Архивировано</TableHead>
+                          <TableHead className="text-right">Действия</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {archivedKeywords.map((keyword) => (
+                          <TableRow key={keyword.id} className="opacity-60">
+                            <TableCell className="font-medium">
+                              {keyword.keyword}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(keyword.updatedAt).toLocaleDateString("ru-RU")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnarchiveKeyword(keyword.id)}
+                                disabled={actionLoading}
+                              >
+                                Восстановить
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
