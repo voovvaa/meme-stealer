@@ -26,6 +26,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Install gosu for step-down from root
+RUN apk add --no-cache gosu
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -34,11 +37,14 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-USER nextjs
+# Copy entrypoint
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3333
 
 ENV PORT=3333
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Entrypoint установит права и запустит сервер от nextjs
+ENTRYPOINT ["/docker-entrypoint.sh"]

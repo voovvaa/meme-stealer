@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export const dynamic = "force-dynamic";
@@ -16,17 +16,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Сохраняем код в файл
-    const authFilePath = path.join(process.cwd(), "../sessions/auth_code.txt");
+    // В Docker контейнере sessions монтирован в /app/sessions
+    const sessionsDir = path.join(process.cwd(), "sessions");
+    const authFilePath = path.join(sessionsDir, "auth_code.txt");
+
+    console.log(`[Auth] Saving code to: ${authFilePath}`);
+    console.log(`[Auth] Current working directory: ${process.cwd()}`);
+
+    // Убеждаемся что директория существует
+    try {
+      await mkdir(sessionsDir, { recursive: true });
+    } catch (err) {
+      // Игнорируем если директория уже существует
+    }
+
+    // Сохраняем код
     await writeFile(authFilePath, code.trim(), "utf-8");
 
-    console.log(`[Auth] Code saved to ${authFilePath}`);
+    console.log(`[Auth] Code saved successfully: ${code.length} characters`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving auth code:", error);
+    console.error("[Auth] Error saving auth code:", error);
     return NextResponse.json(
-      { error: "Failed to save code" },
+      { error: error instanceof Error ? error.message : "Failed to save code" },
       { status: 500 }
     );
   }
