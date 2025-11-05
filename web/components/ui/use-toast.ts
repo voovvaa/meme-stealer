@@ -150,6 +150,11 @@ function toast({ ...props }: Toast) {
     },
   });
 
+  // Автоматически закрываем toast через 5 секунд
+  setTimeout(() => {
+    dismiss();
+  }, TOAST_REMOVE_DELAY);
+
   return {
     id: id,
     dismiss,
