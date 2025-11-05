@@ -172,15 +172,15 @@ export default function ChannelsPage() {
             <form onSubmit={handleAddChannel} className="mb-6 p-4 border rounded-lg bg-muted/50">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Channel ID *</label>
+                  <label className="text-sm font-medium">Channel ID или Username *</label>
                   <Input
                     value={newChannel.channelId}
                     onChange={(e) => setNewChannel({ ...newChannel, channelId: e.target.value })}
-                    placeholder="-1001234567890"
+                    placeholder="-1001234567890 или @channel_username"
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    ID канала с минусом и префиксом -100 (например: -1001234567890)
+                    Numeric ID (например: -1001234567890) или username (например: @mishbekich)
                   </p>
                 </div>
                 <div>
@@ -206,7 +206,7 @@ export default function ChannelsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>ID / Username</TableHead>
                   <TableHead>Название</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Добавлен</TableHead>

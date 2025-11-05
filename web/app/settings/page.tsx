@@ -174,16 +174,16 @@ export default function SettingsPage() {
               <h3 className="text-lg font-semibold">Целевой канал</h3>
 
               <div>
-                <label className="text-sm font-medium">ID целевого канала *</label>
+                <label className="text-sm font-medium">ID или Username целевого канала *</label>
                 <Input
                   type="text"
                   value={config.targetChannelId}
                   onChange={(e) => setConfig({ ...config, targetChannelId: e.target.value })}
-                  placeholder="-1001234567890"
+                  placeholder="-1001234567890 или @my_channel"
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  ID канала, куда будут публиковаться мемы
+                  Канал, куда будут публиковаться мемы (numeric ID или username)
                 </p>
               </div>
             </div>
