@@ -1,7 +1,10 @@
 import dotenvFlow from "dotenv-flow";
 import { z } from "zod";
 
-dotenvFlow.config();
+// Загружаем .env только в dev режиме (в Docker переменные передаются через docker-compose)
+if (process.env.NODE_ENV !== "production") {
+  dotenvFlow.config();
+}
 
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
 

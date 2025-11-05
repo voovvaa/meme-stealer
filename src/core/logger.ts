@@ -1,8 +1,10 @@
 import pino from "pino";
 import dotenv from "dotenv-flow";
 
-// Загружаем переменные окружения
-dotenv.config();
+// Загружаем .env только в dev режиме (в Docker переменные передаются через docker-compose)
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 // Получаем уровень логирования напрямую из process.env
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
