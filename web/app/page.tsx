@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, CheckCircle2, Clock } from "lucide-react";
 
@@ -96,41 +97,49 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="cursor-pointer hover:bg-accent transition-colors">
-              <CardHeader>
-                <CardTitle className="text-base">Управление каналами</CardTitle>
-                <CardDescription>
-                  Добавление и настройка отслеживаемых каналов
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link href="/channels">
+              <Card className="cursor-pointer hover:bg-accent transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">Управление каналами</CardTitle>
+                  <CardDescription>
+                    Добавление и настройка отслеживаемых каналов
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
 
-            <Card className="cursor-pointer hover:bg-accent transition-colors">
-              <CardHeader>
-                <CardTitle className="text-base">Фильтры</CardTitle>
-                <CardDescription>
-                  Настройка ключевых слов для фильтрации
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link href="/keywords">
+              <Card className="cursor-pointer hover:bg-accent transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">Фильтры</CardTitle>
+                  <CardDescription>
+                    Настройка ключевых слов для фильтрации
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
 
-            <Card className="cursor-pointer hover:bg-accent transition-colors">
-              <CardHeader>
-                <CardTitle className="text-base">Настройки времени</CardTitle>
-                <CardDescription>
-                  Интервалы публикации постов
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link href="/settings">
+              <Card className="cursor-pointer hover:bg-accent transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">Настройки времени</CardTitle>
+                  <CardDescription>
+                    Интервалы публикации постов
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
 
-            <Card className="cursor-pointer hover:bg-accent transition-colors">
-              <CardHeader>
-                <CardTitle className="text-base">История</CardTitle>
-                <CardDescription>
-                  Просмотр опубликованных постов
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link href="/history">
+              <Card className="cursor-pointer hover:bg-accent transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-base">История</CardTitle>
+                  <CardDescription>
+                    Просмотр опубликованных постов
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
           </div>
         </CardContent>
       </Card>
