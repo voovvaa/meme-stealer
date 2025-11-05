@@ -38,7 +38,7 @@ const tableExists = (db: Db, table: string): boolean => {
   }
 };
 
-const runMigrations = () => {
+export const runMigrations = () => {
   logger.info({ dbPath: MEME_DB_PATH }, "Запуск миграций базы данных");
 
   try {
@@ -164,9 +164,6 @@ const runMigrations = () => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error({ error: errorMessage }, "Критическая ошибка при выполнении миграций");
-    process.exit(1);
+    throw error;
   }
 };
-
-// Запускаем миграции
-runMigrations();
