@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Database, CheckCircle2, Clock } from "lucide-react";
 import { ChannelActivityChart } from "@/components/charts/channel-activity-chart";
 import { PublicationsTimelineChart } from "@/components/charts/publications-timeline-chart";
+import { BotStatus } from "@/components/bot-status";
+import { DatabaseStats } from "@/components/database-stats";
 
 type Stats = {
   total: number;
@@ -36,11 +38,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Обзор статистики работы бота
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Обзор статистики работы бота
+          </p>
+        </div>
+        <BotStatus />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -95,6 +100,9 @@ export default function Dashboard() {
         <PublicationsTimelineChart />
         <ChannelActivityChart />
       </div>
+
+      {/* Статистика БД */}
+      <DatabaseStats />
 
       <Card>
         <CardHeader>
