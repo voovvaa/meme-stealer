@@ -1,6 +1,6 @@
 import { stdin as input, stdout as output } from "process";
 import { createInterface } from "readline/promises";
-import { logger } from "../../core/logger.js";
+import { logger } from "../../../core/logger.js";
 
 export const ask = async (question: string): Promise<string> => {
   logger.info({ question, isTTY: input.isTTY }, "Создаем readline интерфейс...");
