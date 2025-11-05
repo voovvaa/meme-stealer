@@ -1,30 +1,28 @@
 services:
-  meme-stealer:
+  # Telegram бот
+  meme-stealer-bot:
     build:
       context: .
       dockerfile: Dockerfile
-      # Используем BuildKit для лучшего кэширования
       args:
         BUILDKIT_INLINE_CACHE: 1
 
-    image: meme-stealer:latest
-    container_name: meme-stealer
+    image: meme-stealer-bot:latest
+    container_name: meme-stealer-bot
 
-    # Политика перезапуска
     restart: unless-stopped
 
-    # Volumes для персистентных данных
     volumes:
       - ./sessions:/app/sessions
+      - ./media:/app/media
 
-    # Переменные окружения
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - MEME_DB_PATH=/app/sessions/memes.sqlite
+      - SESSION_STORAGE_PATH=/app/sessions/client.session
 
-    # Ограничения ресурсов
-    # Примечание: CPU лимиты отключены, т.к. Synology NAS не поддерживает CPU CFS scheduler
     deploy:
       resources:
         limits:
@@ -32,7 +30,6 @@ services:
         reservations:
           memory: 128M
 
-    # Healthcheck для мониторинга состояния
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('fs').statSync('/app/sessions')\" || exit 1"]
       interval: 30s
@@ -40,7 +37,6 @@ services:
       start_period: 40s
       retries: 3
 
-    # Логирование с ротацией
     logging:
       driver: "json-file"
       options:
@@ -48,20 +44,68 @@ services:
         max-file: "3"
         compress: "true"
 
-    # Изоляция сети (опционально)
     networks:
       - meme-stealer-network
 
-    # Security options
     security_opt:
       - no-new-privileges:true
 
-    # Read-only root filesystem (если приложение позволяет)
-    # read_only: true
-    # tmpfs:
-    #   - /tmp
+  # Веб-интерфейс
+  meme-stealer-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
 
-# Определение сети
+    image: meme-stealer-web:latest
+    container_name: meme-stealer-web
+
+    restart: unless-stopped
+
+    # Проброс порта для доступа к веб-интерфейсу
+    ports:
+      - "3333:3333"
+
+    # Общий volume с ботом для доступа к SQLite
+    volumes:
+      - ./sessions:/app/sessions
+      - ./media:/app/media
+
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - MEME_DB_PATH=/app/sessions/memes.sqlite
+
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3333 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+    networks:
+      - meme-stealer-network
+
+    security_opt:
+      - no-new-privileges:true
+
+    depends_on:
+      - meme-stealer-bot
+
 networks:
   meme-stealer-network:
     driver: bridge

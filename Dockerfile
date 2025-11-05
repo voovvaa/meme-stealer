@@ -32,6 +32,13 @@ FROM node:20-bullseye-slim AS prod-deps
 
 WORKDIR /app
 
+# Установка системных зависимостей для сборки native модулей
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    python3 \
+    build-essential \
+  && rm -rf /var/lib/apt/lists/*
+
 # Копируем package files
 COPY package.json package-lock.json ./
 

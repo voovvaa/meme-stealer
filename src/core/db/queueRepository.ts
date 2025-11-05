@@ -2,12 +2,13 @@ import Database from "better-sqlite3";
 
 import type { HashedMediaFile } from "../../types/media.js";
 import { ensureDirectoryForFile } from "../../utils/helpers.js";
-import { env } from "../config/env.js";
 import { logger } from "../logger.js";
 
-ensureDirectoryForFile(env.memeDbPath);
+const MEME_DB_PATH = process.env.MEME_DB_PATH || "./sessions/memes.sqlite";
 
-const db = new Database(env.memeDbPath, {
+ensureDirectoryForFile(MEME_DB_PATH);
+
+const db = new Database(MEME_DB_PATH, {
   readonly: false,
   fileMustExist: false,
 });

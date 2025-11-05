@@ -7,7 +7,9 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,js}\"",
-    "format": "prettier --write \"src/**/*.{ts,js}\""
+    "lint:fix": "eslint \"src/**/*.{ts,js}\" --fix",
+    "format": "prettier --write \"src/**/*.{ts,js}\"",
+    "migrate-config": "tsx src/scripts/migrateEnvToDb.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",
