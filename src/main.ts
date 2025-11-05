@@ -1,7 +1,7 @@
-import { logger } from "./core/logger.js";
 import { initConfig } from "./core/config/env.js";
-import { initTelegramClient } from "./features/telegram/client.js";
+import { logger } from "./core/logger.js";
 import { configWatcher } from "./core/services/configWatcher.js";
+import { initTelegramClient } from "./features/telegram/client.js";
 
 const run = async () => {
   // Инициализируем конфигурацию перед стартом

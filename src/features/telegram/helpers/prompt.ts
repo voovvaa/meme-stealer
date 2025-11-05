@@ -1,8 +1,9 @@
+import { existsSync } from "fs";
+import { readFile, unlink } from "fs/promises";
+import path from "path";
 import { stdin as input, stdout as output } from "process";
 import { createInterface } from "readline/promises";
-import { readFile, unlink } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+
 import { logger } from "../../../core/logger.js";
 
 const AUTH_CODE_FILE = path.join(process.cwd(), "sessions", "auth_code.txt");

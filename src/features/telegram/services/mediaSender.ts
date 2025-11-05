@@ -1,7 +1,7 @@
-import { Api, type TelegramClient } from "telegram";
-import { CustomFile } from "telegram/client/uploads.js";
 import fs from "fs/promises";
 import path from "path";
+import { Api, type TelegramClient } from "telegram";
+import { CustomFile } from "telegram/client/uploads.js";
 
 import { UPLOAD_WORKERS } from "../../../core/constants.js";
 import { logger } from "../../../core/logger.js";

@@ -1,5 +1,5 @@
-import pino from "pino";
 import dotenv from "dotenv-flow";
+import pino from "pino";
 
 // Загружаем .env только в dev режиме (в Docker переменные передаются через docker-compose)
 if (process.env.NODE_ENV !== "production") {

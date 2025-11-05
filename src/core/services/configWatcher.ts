@@ -1,5 +1,5 @@
-import { configRepository } from "../db/configRepository.js";
 import { reloadConfig } from "../config/env.js";
+import { configRepository } from "../db/configRepository.js";
 import { logger } from "../logger.js";
 
 /**
