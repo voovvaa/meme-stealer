@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, TooltipProps } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ChannelStat = {
   channelId: string;
   channelName: string | null;
   count: number;
+  name?: string;
 };
 
 const COLORS = [
@@ -22,6 +23,23 @@ const COLORS = [
   "#14b8a6", // teal
   "#a855f7", // purple
 ];
+
+// Кастомный tooltip для показа человекочитаемых имен
+const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const data = payload[0].payload as ChannelStat;
+  const displayName = data.channelName || data.channelId;
+
+  return (
+    <div className="bg-background border border-border rounded-md p-3 shadow-lg">
+      <p className="font-medium text-foreground mb-1">{displayName}</p>
+      <p className="text-sm text-muted-foreground">
+        Постов: <span className="font-semibold text-foreground">{data.count}</span>
+      </p>
+    </div>
+  );
+};
 
 export function ChannelActivityChart() {
   const [data, setData] = useState<ChannelStat[]>([]);
@@ -92,14 +110,7 @@ export function ChannelActivityChart() {
               className="text-xs"
               tick={{ fill: "hsl(var(--muted-foreground))" }}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-              }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" radius={[8, 8, 0, 0]}>
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
