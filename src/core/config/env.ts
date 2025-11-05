@@ -1,6 +1,8 @@
 import dotenvFlow from "dotenv-flow";
 import { z } from "zod";
 
+import { configRepository } from "../db/configRepository.js";
+
 dotenvFlow.config();
 
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
@@ -72,10 +74,7 @@ const parseSystemEnv = () => {
 export const loadConfig = (): AppConfig => {
   const systemEnv = parseSystemEnv();
 
-  // Импортируем configRepository динамически после того, как MEME_DB_PATH установлен
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { configRepository } = require("../db/configRepository.js");
-
+  // Пробуем загрузить из БД
   const dbConfig = configRepository.getConfig();
 
   if (dbConfig) {
