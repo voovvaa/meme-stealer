@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 type Config = {
   id: 1;
@@ -23,15 +24,21 @@ export default function SettingsPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const { toast } = useToast();
 
   const loadConfig = async () => {
     try {
       const res = await fetch("/api/config");
+      if (!res.ok) throw new Error("Ошибка загрузки конфигурации");
       const data = await res.json();
       setConfig(data);
     } catch (error) {
       console.error("Failed to load config:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить конфигурацию",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -46,7 +53,6 @@ export default function SettingsPage() {
     if (!config) return;
 
     setSaving(true);
-    setSuccessMessage("");
 
     try {
       const res = await fetch("/api/config", {
@@ -65,12 +71,20 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        setSuccessMessage("Настройки успешно сохранены! Конфигурация будет перезагружена автоматически.");
-        setTimeout(() => setSuccessMessage(""), 5000);
+        toast({
+          title: "Успешно",
+          description: "Настройки сохранены! Конфигурация будет перезагружена автоматически.",
+        });
+      } else {
+        throw new Error("Failed to save config");
       }
     } catch (error) {
       console.error("Failed to save config:", error);
-      alert("Ошибка при сохранении настроек");
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить настройки",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -105,12 +119,6 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {successMessage && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-                {successMessage}
-              </div>
-            )}
-
             {/* Telegram API Settings */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Telegram API</h3>

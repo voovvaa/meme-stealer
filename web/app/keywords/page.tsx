@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 
 type FilterKeyword = {
   id: number;
@@ -20,14 +21,22 @@ export default function KeywordsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newKeyword, setNewKeyword] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const { toast } = useToast();
 
   const loadKeywords = async () => {
     try {
       const res = await fetch("/api/keywords");
+      if (!res.ok) throw new Error("Ошибка загрузки ключевых слов");
       const data = await res.json();
       setKeywords(data);
     } catch (error) {
       console.error("Failed to load keywords:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить список ключевых слов",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -41,6 +50,7 @@ export default function KeywordsPage() {
     e.preventDefault();
     if (!newKeyword.trim()) return;
 
+    setActionLoading(true);
     try {
       const res = await fetch("/api/keywords", {
         method: "POST",
@@ -54,14 +64,28 @@ export default function KeywordsPage() {
       if (res.ok) {
         setNewKeyword("");
         setShowAddForm(false);
-        loadKeywords();
+        await loadKeywords();
+        toast({
+          title: "Успешно",
+          description: "Ключевое слово добавлено",
+        });
+      } else {
+        throw new Error("Failed to add keyword");
       }
     } catch (error) {
       console.error("Failed to add keyword:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось добавить ключевое слово",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleToggleEnabled = async (keyword: FilterKeyword) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/keywords/${keyword.id}`, {
         method: "PUT",
@@ -70,26 +94,53 @@ export default function KeywordsPage() {
       });
 
       if (res.ok) {
-        loadKeywords();
+        await loadKeywords();
+        toast({
+          title: "Успешно",
+          description: `Ключевое слово ${!keyword.enabled ? "включено" : "выключено"}`,
+        });
+      } else {
+        throw new Error("Failed to toggle keyword");
       }
     } catch (error) {
       console.error("Failed to toggle keyword:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить статус ключевого слова",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeleteKeyword = async (id: number) => {
     if (!confirm("Вы уверены, что хотите удалить это ключевое слово?")) return;
 
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/keywords/${id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        loadKeywords();
+        await loadKeywords();
+        toast({
+          title: "Успешно",
+          description: "Ключевое слово удалено",
+        });
+      } else {
+        throw new Error("Failed to delete keyword");
       }
     } catch (error) {
       console.error("Failed to delete keyword:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить ключевое слово",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -129,7 +180,9 @@ export default function KeywordsPage() {
                     Посты, содержащие это слово, будут отфильтрованы
                   </p>
                 </div>
-                <Button type="submit">Добавить</Button>
+                <Button type="submit" disabled={actionLoading}>
+                  {actionLoading ? "Добавление..." : "Добавить"}
+                </Button>
               </div>
             </form>
           )}
@@ -167,6 +220,7 @@ export default function KeywordsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleEnabled(keyword)}
+                        disabled={actionLoading}
                       >
                         {keyword.enabled ? "Выключить" : "Включить"}
                       </Button>
@@ -174,6 +228,7 @@ export default function KeywordsPage() {
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteKeyword(keyword.id)}
+                        disabled={actionLoading}
                       >
                         Удалить
                       </Button>

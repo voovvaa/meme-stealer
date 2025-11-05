@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Nav } from "@/components/nav";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Meme Stealer Admin",
@@ -19,6 +20,7 @@ export default function RootLayout({
         <main className="container mx-auto p-8">
           {children}
         </main>
+        <Toaster />
       </body>
     </html>
   );

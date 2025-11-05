@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 
 type SourceChannel = {
   id: number;
@@ -21,14 +22,22 @@ export default function ChannelsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newChannel, setNewChannel] = useState({ channelId: "", channelName: "" });
+  const [actionLoading, setActionLoading] = useState(false);
+  const { toast } = useToast();
 
   const loadChannels = async () => {
     try {
       const res = await fetch("/api/channels");
+      if (!res.ok) throw new Error("Ошибка загрузки каналов");
       const data = await res.json();
       setChannels(data);
     } catch (error) {
       console.error("Failed to load channels:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить список каналов",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -42,6 +51,7 @@ export default function ChannelsPage() {
     e.preventDefault();
     if (!newChannel.channelId.trim()) return;
 
+    setActionLoading(true);
     try {
       const res = await fetch("/api/channels", {
         method: "POST",
@@ -56,14 +66,28 @@ export default function ChannelsPage() {
       if (res.ok) {
         setNewChannel({ channelId: "", channelName: "" });
         setShowAddForm(false);
-        loadChannels();
+        await loadChannels();
+        toast({
+          title: "Успешно",
+          description: "Канал добавлен",
+        });
+      } else {
+        throw new Error("Failed to add channel");
       }
     } catch (error) {
       console.error("Failed to add channel:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось добавить канал",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleToggleEnabled = async (channel: SourceChannel) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/channels/${channel.id}`, {
         method: "PUT",
@@ -72,26 +96,53 @@ export default function ChannelsPage() {
       });
 
       if (res.ok) {
-        loadChannels();
+        await loadChannels();
+        toast({
+          title: "Успешно",
+          description: `Канал ${!channel.enabled ? "включен" : "выключен"}`,
+        });
+      } else {
+        throw new Error("Failed to toggle channel");
       }
     } catch (error) {
       console.error("Failed to toggle channel:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить статус канала",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeleteChannel = async (id: number) => {
     if (!confirm("Вы уверены, что хотите удалить этот канал?")) return;
 
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/channels/${id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        loadChannels();
+        await loadChannels();
+        toast({
+          title: "Успешно",
+          description: "Канал удален",
+        });
+      } else {
+        throw new Error("Failed to delete channel");
       }
     } catch (error) {
       console.error("Failed to delete channel:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить канал",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -139,7 +190,9 @@ export default function ChannelsPage() {
                     placeholder="Мой канал"
                   />
                 </div>
-                <Button type="submit">Добавить</Button>
+                <Button type="submit" disabled={actionLoading}>
+                  {actionLoading ? "Добавление..." : "Добавить"}
+                </Button>
               </div>
             </form>
           )}
@@ -183,6 +236,7 @@ export default function ChannelsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleEnabled(channel)}
+                        disabled={actionLoading}
                       >
                         {channel.enabled ? "Выключить" : "Включить"}
                       </Button>
@@ -190,6 +244,7 @@ export default function ChannelsPage() {
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDeleteChannel(channel.id)}
+                        disabled={actionLoading}
                       >
                         Удалить
                       </Button>
