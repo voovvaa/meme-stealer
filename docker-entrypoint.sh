@@ -27,6 +27,22 @@ if [ -f "/app/sessions/memes.sqlite" ]; then
     chmod 644 /app/sessions/memes.sqlite
 fi
 
+# Если есть файл сессии, устанавливаем на него права
+if [ -f "/app/sessions/client.session" ]; then
+    echo "${YELLOW}[Entrypoint] Setting permissions for session file...${NC}"
+    chown nodejs:nodejs /app/sessions/client.session
+    chmod 644 /app/sessions/client.session
+fi
+
+# Создаем и устанавливаем права на директорию media
+if [ ! -d "/app/media" ]; then
+    echo "${YELLOW}[Entrypoint] Creating /app/media directory...${NC}"
+    mkdir -p /app/media
+fi
+echo "${YELLOW}[Entrypoint] Setting permissions for /app/media...${NC}"
+chown -R nodejs:nodejs /app/media
+chmod -R 755 /app/media
+
 # Переключаемся на пользователя nodejs и запускаем приложение
 echo "${GREEN}[Entrypoint] Starting application as nodejs user...${NC}"
 exec gosu nodejs node dist/main.js
