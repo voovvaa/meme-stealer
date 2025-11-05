@@ -18,76 +18,138 @@ const splitEnvList = (value?: string): string[] =>
 
 /**
  * Единая схема для валидации и трансформации переменных окружения
+ * Теперь используется только для LOG_LEVEL, SESSION_STORAGE_PATH, MEME_DB_PATH
  */
-const EnvSchema = z
-  .object({
-    API_ID: z.string().min(1, "API_ID не задан"),
-    API_HASH: z.string().min(1, "API_HASH не задан"),
-    PHONE_NUMBER: z.string().min(1, "PHONE_NUMBER не задан"),
-    TELEGRAM_PASSWORD: z.string().optional(),
-    TARGET_CHANNEL_ID: z.string().min(1, "TARGET_CHANNEL_ID не задан"),
-    SOURCE_CHANNEL_IDS: z.string().optional(),
-    AD_KEYWORDS: z.string().optional(),
-    LOG_LEVEL: z.string().optional(),
-    SESSION_STORAGE_PATH: z.string().optional(),
-    MEME_DB_PATH: z.string().optional(),
-    ENABLE_QUEUE: z.string().optional(),
-    PUBLISH_INTERVAL_MIN: z.string().optional(),
-    PUBLISH_INTERVAL_MAX: z.string().optional(),
-  })
-  .transform((raw) => ({
-    apiId: Number(raw.API_ID),
-    apiHash: raw.API_HASH,
-    phoneNumber: raw.PHONE_NUMBER,
-    telegramPassword:
-      raw.TELEGRAM_PASSWORD && raw.TELEGRAM_PASSWORD.length > 0 ? raw.TELEGRAM_PASSWORD : undefined,
-    targetChannelId: raw.TARGET_CHANNEL_ID,
-    sourceChannelIds: splitEnvList(raw.SOURCE_CHANNEL_IDS),
-    adKeywords: splitEnvList(raw.AD_KEYWORDS),
-    logLevel:
-      raw.LOG_LEVEL && logLevels.includes(raw.LOG_LEVEL as (typeof logLevels)[number])
-        ? (raw.LOG_LEVEL as (typeof logLevels)[number])
-        : "info",
-    sessionStoragePath: raw.SESSION_STORAGE_PATH ?? "./sessions/client.session",
-    memeDbPath: raw.MEME_DB_PATH ?? "./sessions/memes.sqlite",
-    enableQueue: raw.ENABLE_QUEUE === "true" || raw.ENABLE_QUEUE === "1",
-    publishIntervalMin: raw.PUBLISH_INTERVAL_MIN ? Number(raw.PUBLISH_INTERVAL_MIN) : 60,
-    publishIntervalMax: raw.PUBLISH_INTERVAL_MAX ? Number(raw.PUBLISH_INTERVAL_MAX) : 300,
-  }))
-  .refine((data) => data.sourceChannelIds.length > 0, {
-    message: "Не заданы SOURCE_CHANNEL_IDS",
-    path: ["sourceChannelIds"],
-  })
-  .refine((data) => Number.isInteger(data.apiId) && data.apiId > 0, {
-    message: "API_ID должен быть положительным целым числом",
-    path: ["apiId"],
-  })
-  .refine(
-    (data) => data.publishIntervalMin > 0 && data.publishIntervalMax > 0,
-    {
-      message: "Интервалы публикации должны быть положительными числами",
-      path: ["publishIntervalMin", "publishIntervalMax"],
-    },
-  )
-  .refine(
-    (data) => data.publishIntervalMin <= data.publishIntervalMax,
-    {
-      message: "PUBLISH_INTERVAL_MIN должен быть меньше или равен PUBLISH_INTERVAL_MAX",
-      path: ["publishIntervalMin", "publishIntervalMax"],
-    },
-  );
+const EnvSchema = z.object({
+  LOG_LEVEL: z.string().optional(),
+  SESSION_STORAGE_PATH: z.string().optional(),
+  MEME_DB_PATH: z.string().optional(),
+});
 
 /**
- * Парсит и валидирует переменные окружения
+ * Тип конфигурации приложения
  */
-const parseEnv = () => {
+export type AppConfig = {
+  apiId: number;
+  apiHash: string;
+  phoneNumber: string;
+  telegramPassword: string | undefined;
+  targetChannelId: string;
+  sourceChannelIds: string[];
+  adKeywords: string[];
+  logLevel: (typeof logLevels)[number];
+  sessionStoragePath: string;
+  memeDbPath: string;
+  enableQueue: boolean;
+  publishIntervalMin: number;
+  publishIntervalMax: number;
+};
+
+/**
+ * Парсит системные переменные окружения (пути, лог-уровень)
+ */
+const parseSystemEnv = () => {
   try {
-    return EnvSchema.parse(process.env);
+    const parsed = EnvSchema.parse(process.env);
+    return {
+      logLevel:
+        parsed.LOG_LEVEL && logLevels.includes(parsed.LOG_LEVEL as (typeof logLevels)[number])
+          ? (parsed.LOG_LEVEL as (typeof logLevels)[number])
+          : ("info" as const),
+      sessionStoragePath: parsed.SESSION_STORAGE_PATH ?? "./sessions/client.session",
+      memeDbPath: parsed.MEME_DB_PATH ?? "./sessions/memes.sqlite",
+    };
   } catch (error) {
-    console.error("Переменные окружения не проходят валидацию:");
+    console.error("Системные переменные окружения не проходят валидацию:");
     console.error(error);
     process.exit(1);
   }
 };
 
-export const env = parseEnv();
+/**
+ * Загружает конфигурацию из базы данных или .env (для обратной совместимости)
+ */
+export const loadConfig = (): AppConfig => {
+  const systemEnv = parseSystemEnv();
+
+  // Импортируем configRepository динамически после того, как MEME_DB_PATH установлен
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { configRepository } = require("../db/configRepository.js");
+
+  const dbConfig = configRepository.getConfig();
+
+  if (dbConfig) {
+    // Конфигурация найдена в БД
+    const sourceChannels = configRepository.getEnabledSourceChannels();
+    const filterKeywords = configRepository.getEnabledFilterKeywords();
+
+    return {
+      apiId: dbConfig.apiId,
+      apiHash: dbConfig.apiHash,
+      phoneNumber: dbConfig.phoneNumber,
+      telegramPassword: dbConfig.telegramPassword ?? undefined,
+      targetChannelId: dbConfig.targetChannelId,
+      sourceChannelIds: sourceChannels.map((ch) => ch.channelId),
+      adKeywords: filterKeywords.map((kw) => kw.keyword),
+      enableQueue: dbConfig.enableQueue,
+      publishIntervalMin: dbConfig.publishIntervalMin,
+      publishIntervalMax: dbConfig.publishIntervalMax,
+      ...systemEnv,
+    };
+  }
+
+  // Fallback на .env для обратной совместимости
+  console.warn("⚠️  Конфигурация не найдена в БД, используется .env");
+  console.warn("⚠️  Рекомендуется выполнить миграцию: npm run migrate-config");
+
+  const API_ID = process.env.API_ID;
+  const API_HASH = process.env.API_HASH;
+  const PHONE_NUMBER = process.env.PHONE_NUMBER;
+  const TARGET_CHANNEL_ID = process.env.TARGET_CHANNEL_ID;
+  const SOURCE_CHANNEL_IDS = process.env.SOURCE_CHANNEL_IDS;
+
+  if (!API_ID || !API_HASH || !PHONE_NUMBER || !TARGET_CHANNEL_ID || !SOURCE_CHANNEL_IDS) {
+    console.error("❌ Не все обязательные параметры заданы в .env");
+    console.error("❌ Выполните миграцию: npm run migrate-config");
+    process.exit(1);
+  }
+
+  return {
+    apiId: Number(API_ID),
+    apiHash: API_HASH,
+    phoneNumber: PHONE_NUMBER,
+    telegramPassword:
+      process.env.TELEGRAM_PASSWORD && process.env.TELEGRAM_PASSWORD.length > 0
+        ? process.env.TELEGRAM_PASSWORD
+        : undefined,
+    targetChannelId: TARGET_CHANNEL_ID,
+    sourceChannelIds: splitEnvList(SOURCE_CHANNEL_IDS),
+    adKeywords: splitEnvList(process.env.AD_KEYWORDS),
+    enableQueue: process.env.ENABLE_QUEUE === "true" || process.env.ENABLE_QUEUE === "1",
+    publishIntervalMin: Number(process.env.PUBLISH_INTERVAL_MIN) || 60,
+    publishIntervalMax: Number(process.env.PUBLISH_INTERVAL_MAX) || 300,
+    ...systemEnv,
+  };
+};
+
+// Глобальная конфигурация
+let currentConfig: AppConfig = loadConfig();
+
+/**
+ * Получить текущую конфигурацию
+ */
+export const getConfig = (): AppConfig => currentConfig;
+
+/**
+ * Перезагрузить конфигурацию из БД
+ */
+export const reloadConfig = (): AppConfig => {
+  currentConfig = loadConfig();
+  return currentConfig;
+};
+
+/**
+ * Для обратной совместимости со старым кодом
+ * @deprecated Используйте getConfig() вместо прямого доступа к env
+ */
+export const env = getConfig();
