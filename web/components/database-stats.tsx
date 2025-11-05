@@ -80,7 +80,9 @@ export function DatabaseStats() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Публикация</p>
               <p className="text-2xl font-bold">
-                {((stats.publishedMemes / stats.totalMemes) * 100).toFixed(1)}%
+                {stats.totalMemes > 0
+                  ? ((stats.publishedMemes / stats.totalMemes) * 100).toFixed(1)
+                  : "0.0"}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {stats.publishedMemes} из {stats.totalMemes}
