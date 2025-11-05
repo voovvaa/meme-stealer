@@ -45,6 +45,7 @@ export default function ChannelsPage() {
 
   useEffect(() => {
     loadChannels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddChannel = async (e: React.FormEvent) => {

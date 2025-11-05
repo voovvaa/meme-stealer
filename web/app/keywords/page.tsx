@@ -44,6 +44,7 @@ export default function KeywordsPage() {
 
   useEffect(() => {
     loadKeywords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddKeyword = async (e: React.FormEvent) => {

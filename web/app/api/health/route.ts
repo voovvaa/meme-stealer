@@ -17,7 +17,7 @@ export async function GET() {
     let dbSizeMB = 0;
     try {
       const stats = fs.statSync(dbPath);
-      dbSizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+      dbSizeMB = parseFloat((stats.size / (1024 * 1024)).toFixed(2));
     } catch (err) {
       console.error("Failed to get DB size:", err);
     }
@@ -33,7 +33,7 @@ export async function GET() {
     return NextResponse.json({
       database: {
         status: dbStatus ? "healthy" : "error",
-        sizeMB: parseFloat(dbSizeMB as any),
+        sizeMB: dbSizeMB,
         totalMemes: totalMemes.count,
         publishedMemes: publishedMemes.count,
         pendingMemes: totalMemes.count - publishedMemes.count,
