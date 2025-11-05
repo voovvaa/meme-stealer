@@ -14,6 +14,7 @@ services:
 
     volumes:
       - ./sessions:/app/sessions
+      - ./media:/app/media
 
     env_file:
       - .env
@@ -67,6 +68,7 @@ services:
     # Общий volume с ботом для доступа к SQLite
     volumes:
       - ./sessions:/app/sessions
+      - ./media:/app/media
 
     env_file:
       - .env

@@ -63,6 +63,7 @@ export type Post = {
   sourceChannelId: string;
   sourceMessageId: number;
   targetMessageId: number | null;
+  filePath: string | null;
   createdAt: string;
 };
 
@@ -130,6 +131,7 @@ const rowToPost = (row: {
   source_channel_id: string;
   source_message_id: number;
   target_message_id: number | null;
+  file_path: string | null;
   created_at: string;
 }): Post => ({
   id: row.id,
@@ -137,6 +139,7 @@ const rowToPost = (row: {
   sourceChannelId: row.source_channel_id,
   sourceMessageId: row.source_message_id,
   targetMessageId: row.target_message_id,
+  filePath: row.file_path,
   createdAt: row.created_at,
 });
 

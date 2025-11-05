@@ -114,6 +114,7 @@ export class PostQueue {
           sourceChannelId: item.sourceChannelId,
           sourceMessageId: item.sourceMessageId,
           targetMessageId: result.targetMessageId,
+          filePath: result.filePath,
         });
 
         // Обновляем статус на completed

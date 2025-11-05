@@ -154,6 +154,7 @@ const handleChannelPost = async (
           sourceChannelId,
           sourceMessageId: event.message.id,
           targetMessageId: result.targetMessageId,
+          filePath: result.filePath,
         });
       }
 

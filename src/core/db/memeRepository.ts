@@ -21,6 +21,7 @@ db.exec(`
     source_channel_id TEXT NOT NULL,
     source_message_id INTEGER NOT NULL,
     target_message_id INTEGER,
+    file_path TEXT,
     created_at TEXT NOT NULL
   );
 
@@ -28,6 +29,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_memes_created_at ON memes(created_at);
   CREATE INDEX IF NOT EXISTS idx_memes_source_channel ON memes(source_channel_id);
 `);
+
+// Миграция: добавляем file_path если его нет
+try {
+  db.exec(`ALTER TABLE memes ADD COLUMN file_path TEXT;`);
+  logger.info("Добавлена колонка file_path в таблицу memes");
+} catch (error) {
+  // Колонка уже существует, это нормально
+}
 
 const selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");
 const insertStmt = db.prepare(
@@ -37,9 +46,10 @@ const insertStmt = db.prepare(
       source_channel_id,
       source_message_id,
       target_message_id,
+      file_path,
       created_at
     )
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
   `,
 );
 
@@ -48,6 +58,7 @@ export type MemeRecordInput = {
   sourceChannelId: string;
   sourceMessageId: number;
   targetMessageId: number | null;
+  filePath?: string;
 };
 
 export const memeRepository = {
@@ -62,6 +73,7 @@ export const memeRepository = {
         record.sourceChannelId,
         record.sourceMessageId,
         record.targetMessageId,
+        record.filePath || null,
         new Date().toISOString(),
       );
     } catch (error) {
