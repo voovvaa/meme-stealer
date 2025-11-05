@@ -1,8 +1,13 @@
 import { logger } from "./core/logger.js";
+import { initConfig } from "./core/config/env.js";
 import { initTelegramClient } from "./features/telegram/client.js";
 import { configWatcher } from "./core/services/configWatcher.js";
 
 const run = async () => {
+  // Инициализируем конфигурацию перед стартом
+  await initConfig();
+  logger.info("Конфигурация загружена");
+
   await initTelegramClient();
   logger.info("MTProto клиент успешно запущен и ожидает новые сообщения.");
 

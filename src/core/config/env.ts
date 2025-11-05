@@ -1,8 +1,6 @@
 import dotenvFlow from "dotenv-flow";
 import { z } from "zod";
 
-import { configRepository } from "../db/configRepository.js";
-
 dotenvFlow.config();
 
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
@@ -71,8 +69,11 @@ const parseSystemEnv = () => {
 /**
  * Загружает конфигурацию из базы данных или .env (для обратной совместимости)
  */
-export const loadConfig = (): AppConfig => {
+export const loadConfig = async (): Promise<AppConfig> => {
   const systemEnv = parseSystemEnv();
+
+  // Ленивый импорт для избежания циклических зависимостей
+  const { configRepository } = await import("../db/configRepository.js");
 
   // Пробуем загрузить из БД
   const dbConfig = configRepository.getConfig();
@@ -131,19 +132,36 @@ export const loadConfig = (): AppConfig => {
   };
 };
 
-// Глобальная конфигурация
-let currentConfig: AppConfig = loadConfig();
+// Глобальная конфигурация (инициализируется асинхронно)
+let currentConfig: AppConfig | null = null;
+
+/**
+ * Инициализация конфигурации (вызывается один раз при старте)
+ */
+export const initConfig = async (): Promise<AppConfig> => {
+  if (!currentConfig) {
+    currentConfig = await loadConfig();
+  }
+  return currentConfig;
+};
 
 /**
  * Получить текущую конфигурацию
  */
-export const getConfig = (): AppConfig => currentConfig;
+export const getConfig = (): AppConfig => {
+  if (!currentConfig) {
+    throw new Error(
+      "Конфигурация не инициализирована! Вызовите initConfig() перед использованием.",
+    );
+  }
+  return currentConfig;
+};
 
 /**
  * Перезагрузить конфигурацию из БД
  */
-export const reloadConfig = (): AppConfig => {
-  currentConfig = loadConfig();
+export const reloadConfig = async (): Promise<AppConfig> => {
+  currentConfig = await loadConfig();
   return currentConfig;
 };
 
@@ -151,4 +169,16 @@ export const reloadConfig = (): AppConfig => {
  * Для обратной совместимости со старым кодом
  * @deprecated Используйте getConfig() вместо прямого доступа к env
  */
-export const env = getConfig();
+export const env = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if (!currentConfig) {
+        throw new Error(
+          "Конфигурация не инициализирована! Вызовите initConfig() перед использованием.",
+        );
+      }
+      return currentConfig[prop as keyof AppConfig];
+    },
+  },
+) as AppConfig;

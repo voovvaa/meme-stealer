@@ -43,7 +43,7 @@ export class ConfigWatcher {
   /**
    * Проверить наличие обновлений конфигурации
    */
-  private checkForUpdates(): void {
+  private async checkForUpdates(): Promise<void> {
     try {
       const config = configRepository.getConfig();
 
@@ -51,7 +51,7 @@ export class ConfigWatcher {
         logger.info("Обнаружено изменение конфигурации, перезагрузка...");
 
         // Перезагружаем конфигурацию
-        const newConfig = reloadConfig();
+        const newConfig = await reloadConfig();
 
         // Сбрасываем флаг needs_reload
         configRepository.clearNeedsReload();
