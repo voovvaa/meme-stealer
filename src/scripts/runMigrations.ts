@@ -67,11 +67,12 @@ const runMigrations = () => {
         up: () => {
           // Проверяем существование таблицы
           if (!tableExists(db, "source_channels")) {
-            logger.warn("Таблица source_channels не существует, пропускаем миграцию");
-            return;
+            throw new Error(
+              "Таблица source_channels не существует. База данных повреждена или не инициализирована.",
+            );
           }
 
-          // Проверяем существование колонки
+          // Проверяем существование колонки - если есть, то миграция уже применена
           if (columnExists(db, "source_channels", "archived")) {
             logger.debug("Колонка archived уже существует в source_channels");
             return;
@@ -88,8 +89,9 @@ const runMigrations = () => {
         name: "002_add_archived_to_filter_keywords",
         up: () => {
           if (!tableExists(db, "filter_keywords")) {
-            logger.warn("Таблица filter_keywords не существует, пропускаем миграцию");
-            return;
+            throw new Error(
+              "Таблица filter_keywords не существует. База данных повреждена или не инициализирована.",
+            );
           }
 
           if (columnExists(db, "filter_keywords", "archived")) {
@@ -108,8 +110,9 @@ const runMigrations = () => {
         name: "003_add_file_path_to_memes",
         up: () => {
           if (!tableExists(db, "memes")) {
-            logger.warn("Таблица memes не существует, пропускаем миграцию");
-            return;
+            throw new Error(
+              "Таблица memes не существует. База данных повреждена или не инициализирована.",
+            );
           }
 
           if (columnExists(db, "memes", "file_path")) {
