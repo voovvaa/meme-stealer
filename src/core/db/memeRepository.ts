@@ -30,14 +30,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_memes_source_channel ON memes(source_channel_id);
 `);
 
-// Миграция: добавляем file_path если его нет
-try {
-  db.exec(`ALTER TABLE memes ADD COLUMN file_path TEXT;`);
-  logger.info("Добавлена колонка file_path в таблицу memes");
-} catch {
-  // Колонка уже существует, это нормально
-}
-
 const selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");
 const insertStmt = db.prepare(
   `
