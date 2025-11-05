@@ -12,8 +12,23 @@ import { extractMediaFiles } from "../services/mediaExtractor.js";
 import { sendMediaFiles } from "../services/mediaSender.js";
 import type { PostQueue } from "../services/postQueue.js";
 
-const isAdContent = buildAdFilter(env.adKeywords);
-const channelMatcher = createChannelMatcher(env.sourceChannelIds);
+// Ленивая инициализация для избежания обращения к env до initConfig()
+let isAdContent: ReturnType<typeof buildAdFilter> | null = null;
+let channelMatcher: ReturnType<typeof createChannelMatcher> | null = null;
+
+const getIsAdContent = () => {
+  if (!isAdContent) {
+    isAdContent = buildAdFilter(env.adKeywords);
+  }
+  return isAdContent;
+};
+
+const getChannelMatcher = () => {
+  if (!channelMatcher) {
+    channelMatcher = createChannelMatcher(env.sourceChannelIds);
+  }
+  return channelMatcher;
+};
 
 type ChannelMeta = {
   id: bigInt.BigInteger;
@@ -61,7 +76,7 @@ const handleChannelPost = async (
     return;
   }
 
-  if (!channelMatcher(channelMeta.id.toString(), channelMeta.username)) {
+  if (!getChannelMatcher()(channelMeta.id.toString(), channelMeta.username)) {
     logger.debug(
       { channelId: channelMeta.id, username: channelMeta.username },
       "Источник не входит в белый список, пропуск",
@@ -72,7 +87,7 @@ const handleChannelPost = async (
   const content = event.message.message ?? "";
   const caption = event.message.media ? content : null;
 
-  if (isAdContent(content, caption)) {
+  if (getIsAdContent()(content, caption)) {
     logger.info(
       {
         channelId: channelMeta.id,
@@ -168,10 +183,13 @@ const handleChannelPost = async (
  * Регистрирует обработчик постов из каналов
  */
 export const registerChannelPostHandler = (client: TelegramClient, postQueue?: PostQueue) => {
+  // Получаем sourceChannelIds из env при вызове функции, а не при импорте модуля
+  const sourceChannelIds = env.sourceChannelIds;
+
   client.addEventHandler(
     (event) => handleChannelPost(client, event, postQueue),
     new NewMessage({
-      chats: env.sourceChannelIds,
+      chats: sourceChannelIds,
     }),
   );
 };
