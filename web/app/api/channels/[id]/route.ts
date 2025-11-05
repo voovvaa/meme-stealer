@@ -5,9 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await props.params;
     const id = parseInt(params.id);
     const body = await request.json();
     sourceChannelsRepository.update(id, body);
@@ -23,9 +24,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await props.params;
     const id = parseInt(params.id);
     sourceChannelsRepository.delete(id);
     return NextResponse.json({ success: true });
