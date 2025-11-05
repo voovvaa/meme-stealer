@@ -68,6 +68,8 @@ services:
     volumes:
       - ./sessions:/app/sessions
 
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - MEME_DB_PATH=/app/sessions/memes.sqlite
