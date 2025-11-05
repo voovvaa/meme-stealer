@@ -236,14 +236,24 @@ const rowToConfig = (row: {
   updatedAt: row.updated_at,
 });
 
-const rowToSourceChannel = (row: {
+type SourceChannelRow = {
   id: number;
   channel_id: string;
   channel_name: string | null;
   enabled: number;
   created_at: string;
   updated_at: string;
-}): SourceChannel => ({
+};
+
+type FilterKeywordRow = {
+  id: number;
+  keyword: string;
+  enabled: number;
+  created_at: string;
+  updated_at: string;
+};
+
+const rowToSourceChannel = (row: SourceChannelRow): SourceChannel => ({
   id: row.id,
   channelId: row.channel_id,
   channelName: row.channel_name,
@@ -252,13 +262,7 @@ const rowToSourceChannel = (row: {
   updatedAt: row.updated_at,
 });
 
-const rowToFilterKeyword = (row: {
-  id: number;
-  keyword: string;
-  enabled: number;
-  created_at: string;
-  updated_at: string;
-}): FilterKeyword => ({
+const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
   enabled: Boolean(row.enabled),
@@ -332,35 +336,13 @@ export const configRepository = {
 
   // Source channels operations
   getAllSourceChannels(): SourceChannel[] {
-    const rows = getAllSourceChannelsStmt.all();
-    return rows.map((row) =>
-      rowToSourceChannel(
-        row as {
-          id: number;
-          channel_id: string;
-          channel_name: string | null;
-          enabled: number;
-          created_at: string;
-          updated_at: string;
-        },
-      ),
-    );
+    const rows = getAllSourceChannelsStmt.all() as SourceChannelRow[];
+    return rows.map((row) => rowToSourceChannel(row));
   },
 
   getEnabledSourceChannels(): SourceChannel[] {
-    const rows = getEnabledSourceChannelsStmt.all();
-    return rows.map((row) =>
-      rowToSourceChannel(
-        row as {
-          id: number;
-          channel_id: string;
-          channel_name: string | null;
-          enabled: number;
-          created_at: string;
-          updated_at: string;
-        },
-      ),
-    );
+    const rows = getEnabledSourceChannelsStmt.all() as SourceChannelRow[];
+    return rows.map((row) => rowToSourceChannel(row));
   },
 
   addSourceChannel(input: SourceChannelInput): void {
@@ -409,33 +391,13 @@ export const configRepository = {
 
   // Filter keywords operations
   getAllFilterKeywords(): FilterKeyword[] {
-    const rows = getAllFilterKeywordsStmt.all();
-    return rows.map((row) =>
-      rowToFilterKeyword(
-        row as {
-          id: number;
-          keyword: string;
-          enabled: number;
-          created_at: string;
-          updated_at: string;
-        },
-      ),
-    );
+    const rows = getAllFilterKeywordsStmt.all() as FilterKeywordRow[];
+    return rows.map((row) => rowToFilterKeyword(row));
   },
 
   getEnabledFilterKeywords(): FilterKeyword[] {
-    const rows = getEnabledFilterKeywordsStmt.all();
-    return rows.map((row) =>
-      rowToFilterKeyword(
-        row as {
-          id: number;
-          keyword: string;
-          enabled: number;
-          created_at: string;
-          updated_at: string;
-        },
-      ),
-    );
+    const rows = getEnabledFilterKeywordsStmt.all() as FilterKeywordRow[];
+    return rows.map((row) => rowToFilterKeyword(row));
   },
 
   addFilterKeyword(input: FilterKeywordInput): void {
