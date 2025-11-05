@@ -29,12 +29,14 @@ export async function DELETE(
   try {
     const params = await props.params;
     const id = parseInt(params.id);
-    filterKeywordsRepository.delete(id);
+
+    // Архивируем вместо удаления
+    filterKeywordsRepository.archive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting keyword:", error);
+    console.error("Error archiving keyword:", error);
     return NextResponse.json(
-      { error: "Failed to delete keyword" },
+      { error: "Failed to archive keyword" },
       { status: 500 }
     );
   }

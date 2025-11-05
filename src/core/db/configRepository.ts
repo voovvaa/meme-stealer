@@ -45,6 +45,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_source_channels_enabled ON source_channels(enabled);
 `);
 
+// Добавляем колонку archived если её нет
+try {
+  db.exec(`ALTER TABLE source_channels ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`);
+  logger.info("Добавлена колонка archived в таблицу source_channels");
+} catch (error) {
+  // Колонка уже существует
+}
+
+try {
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_source_channels_archived ON source_channels(archived);`);
+} catch (error) {
+  // Индекс уже существует
+}
+
 // Таблица для ключевых слов фильтрации
 db.exec(`
   CREATE TABLE IF NOT EXISTS filter_keywords (
@@ -57,6 +71,20 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_filter_keywords_enabled ON filter_keywords(enabled);
 `);
+
+// Добавляем колонку archived если её нет
+try {
+  db.exec(`ALTER TABLE filter_keywords ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`);
+  logger.info("Добавлена колонка archived в таблицу filter_keywords");
+} catch (error) {
+  // Колонка уже существует
+}
+
+try {
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_filter_keywords_archived ON filter_keywords(archived);`);
+} catch (error) {
+  // Индекс уже существует
+}
 
 // Типы
 export type Config = {

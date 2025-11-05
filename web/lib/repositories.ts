@@ -28,6 +28,7 @@ export type SourceChannel = {
   channelId: string;
   channelName: string | null;
   enabled: boolean;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,6 +43,7 @@ export type FilterKeyword = {
   id: number;
   keyword: string;
   enabled: boolean;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -100,6 +102,7 @@ const rowToSourceChannel = (row: {
   channel_id: string;
   channel_name: string | null;
   enabled: number;
+  archived: number;
   created_at: string;
   updated_at: string;
 }): SourceChannel => ({
@@ -107,6 +110,7 @@ const rowToSourceChannel = (row: {
   channelId: row.channel_id,
   channelName: row.channel_name,
   enabled: Boolean(row.enabled),
+  archived: Boolean(row.archived),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -115,12 +119,14 @@ const rowToFilterKeyword = (row: {
   id: number;
   keyword: string;
   enabled: number;
+  archived: number;
   created_at: string;
   updated_at: string;
 }): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
   enabled: Boolean(row.enabled),
+  archived: Boolean(row.archived),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -251,6 +257,26 @@ export const sourceChannelsRepository = {
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
+  archive(id: number): void {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE source_channels SET archived = 1, updated_at = ?
+      WHERE id = ?
+    `).run(now, id);
+    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+  },
+
+  unarchive(id: number): void {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE source_channels SET archived = 0, updated_at = ?
+      WHERE id = ?
+    `).run(now, id);
+    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+  },
+
   delete(id: number): void {
     const db = getDb();
     db.prepare("DELETE FROM source_channels WHERE id = ?").run(id);
@@ -294,6 +320,26 @@ export const filterKeywordsRepository = {
       now,
       id
     );
+    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+  },
+
+  archive(id: number): void {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE filter_keywords SET archived = 1, updated_at = ?
+      WHERE id = ?
+    `).run(now, id);
+    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+  },
+
+  unarchive(id: number): void {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE filter_keywords SET archived = 0, updated_at = ?
+      WHERE id = ?
+    `).run(now, id);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 

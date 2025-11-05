@@ -29,12 +29,14 @@ export async function DELETE(
   try {
     const params = await props.params;
     const id = parseInt(params.id);
-    sourceChannelsRepository.delete(id);
+
+    // Архивируем вместо удаления
+    sourceChannelsRepository.archive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting channel:", error);
+    console.error("Error archiving channel:", error);
     return NextResponse.json(
-      { error: "Failed to delete channel" },
+      { error: "Failed to archive channel" },
       { status: 500 }
     );
   }
