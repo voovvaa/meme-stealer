@@ -1,59 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-
-type SourceChannel = {
-  id: number;
-  channelId: string;
-  channelName: string | null;
-  enabled: boolean;
-  archived: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+import { useArchivableList } from "@/lib/hooks/useArchivableList";
+import { ArchivableTable } from "@/components/archivable-table";
+import type { SourceChannel } from "@/lib/types";
 
 export default function ChannelsPage() {
-  const [channels, setChannels] = useState<SourceChannel[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newChannel, setNewChannel] = useState({ channelId: "", channelName: "" });
-  const [actionLoading, setActionLoading] = useState(false);
   const { toast } = useToast();
 
-  const loadChannels = async () => {
-    try {
-      const res = await fetch("/api/channels");
-      if (!res.ok) throw new Error("Ошибка загрузки каналов");
-      const data = await res.json();
-      setChannels(data);
-    } catch (error) {
-      console.error("Failed to load channels:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось загрузить список каналов",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadChannels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const {
+    activeItems,
+    archivedItems,
+    loading,
+    actionLoading,
+    loadItems,
+    toggleEnabled,
+    archive,
+    unarchive,
+  } = useArchivableList<SourceChannel>({
+    apiEndpoint: "/api/channels",
+    entityName: "Канал",
+    entityNamePlural: "каналы",
+  });
 
   const handleAddChannel = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChannel.channelId.trim()) return;
 
-    setActionLoading(true);
     try {
       const res = await fetch("/api/channels", {
         method: "POST",
@@ -68,7 +47,7 @@ export default function ChannelsPage() {
       if (res.ok) {
         setNewChannel({ channelId: "", channelName: "" });
         setShowAddForm(false);
-        await loadChannels();
+        await loadItems();
         toast({
           title: "Успешно",
           description: "Канал добавлен",
@@ -83,96 +62,6 @@ export default function ChannelsPage() {
         description: "Не удалось добавить канал",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleToggleEnabled = async (channel: SourceChannel) => {
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/channels/${channel.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: !channel.enabled }),
-      });
-
-      if (res.ok) {
-        await loadChannels();
-        toast({
-          title: "Успешно",
-          description: `Канал ${!channel.enabled ? "включен" : "выключен"}`,
-        });
-      } else {
-        throw new Error("Failed to toggle channel");
-      }
-    } catch (error) {
-      console.error("Failed to toggle channel:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось изменить статус канала",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleArchiveChannel = async (id: number) => {
-    if (!confirm("Вы уверены, что хотите архивировать этот канал?")) return;
-
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/channels/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        await loadChannels();
-        toast({
-          title: "Успешно",
-          description: "Канал архивирован",
-        });
-      } else {
-        throw new Error("Failed to archive channel");
-      }
-    } catch (error) {
-      console.error("Failed to archive channel:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось архивировать канал",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleUnarchiveChannel = async (id: number) => {
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/channels/${id}/unarchive`, {
-        method: "POST",
-      });
-
-      if (res.ok) {
-        await loadChannels();
-        toast({
-          title: "Успешно",
-          description: "Канал восстановлен",
-        });
-      } else {
-        throw new Error("Failed to unarchive channel");
-      }
-    } catch (error) {
-      console.error("Failed to unarchive channel:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось восстановить канал",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -227,117 +116,38 @@ export default function ChannelsPage() {
             </form>
           )}
 
-          {/* Активные каналы */}
-          {(() => {
-            const activeChannels = channels.filter((c) => !c.archived);
-            const archivedChannels = channels.filter((c) => c.archived);
-
-            return (
-              <>
-                {activeChannels.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Нет добавленных каналов
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID / Username</TableHead>
-                        <TableHead>Название</TableHead>
-                        <TableHead>Статус</TableHead>
-                        <TableHead>Добавлен</TableHead>
-                        <TableHead className="text-right">Действия</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeChannels.map((channel) => (
-                        <TableRow key={channel.id}>
-                          <TableCell className="font-mono text-sm">
-                            {channel.channelId}
-                          </TableCell>
-                          <TableCell>
-                            {channel.channelName || (
-                              <span className="text-muted-foreground italic">Без названия</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={channel.enabled ? "default" : "secondary"}>
-                              {channel.enabled ? "Включен" : "Выключен"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(channel.createdAt).toLocaleDateString("ru-RU")}
-                          </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleToggleEnabled(channel)}
-                              disabled={actionLoading}
-                            >
-                              {channel.enabled ? "Выключить" : "Включить"}
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleArchiveChannel(channel.id)}
-                              disabled={actionLoading}
-                            >
-                              Архивировать
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-
-                {/* Архив */}
-                {archivedChannels.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Архив</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID / Username</TableHead>
-                          <TableHead>Название</TableHead>
-                          <TableHead>Архивирован</TableHead>
-                          <TableHead className="text-right">Действия</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {archivedChannels.map((channel) => (
-                          <TableRow key={channel.id} className="opacity-60">
-                            <TableCell className="font-mono text-sm">
-                              {channel.channelId}
-                            </TableCell>
-                            <TableCell>
-                              {channel.channelName || (
-                                <span className="text-muted-foreground italic">Без названия</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(channel.updatedAt).toLocaleDateString("ru-RU")}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUnarchiveChannel(channel.id)}
-                                disabled={actionLoading}
-                              >
-                                Восстановить
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
-            );
-          })()}
+          <ArchivableTable
+            activeItems={activeItems}
+            archivedItems={archivedItems}
+            columns={[
+              {
+                header: "ID / Username",
+                render: (channel) => (
+                  <span className="font-mono text-sm">{channel.channelId}</span>
+                ),
+              },
+              {
+                header: "Название",
+                render: (channel) =>
+                  channel.channelName || (
+                    <span className="text-muted-foreground italic">Без названия</span>
+                  ),
+              },
+              {
+                header: "Добавлен",
+                render: (channel) => (
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(channel.createdAt).toLocaleDateString("ru-RU")}
+                  </span>
+                ),
+              },
+            ]}
+            onToggleEnabled={toggleEnabled}
+            onArchive={archive}
+            onUnarchive={unarchive}
+            actionLoading={actionLoading}
+            emptyMessage="Нет добавленных каналов"
+          />
         </CardContent>
       </Card>
     </div>
