@@ -2,11 +2,16 @@ import { initConfig } from "./core/config/env.js";
 import { logger } from "./core/logger.js";
 import { configWatcher } from "./core/services/configWatcher.js";
 import { initTelegramClient } from "./features/telegram/client.js";
+import { runMigrations } from "./scripts/runMigrations.js";
 
 const run = async () => {
   // Инициализируем конфигурацию перед стартом
   await initConfig();
   logger.info("Конфигурация загружена");
+
+  // Запускаем миграции БД (после создания базовых таблиц при импорте configRepository)
+  runMigrations();
+  logger.info("Миграции базы данных выполнены");
 
   await initTelegramClient();
   logger.info("MTProto клиент успешно запущен и ожидает новые сообщения.");

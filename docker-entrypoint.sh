@@ -43,15 +43,7 @@ echo "${YELLOW}[Entrypoint] Setting permissions for /app/media...${NC}"
 chown -R nodejs:nodejs /app/media
 chmod -R 755 /app/media
 
-# Запуск миграций базы данных
-echo "${GREEN}[Entrypoint] Running database migrations...${NC}"
-gosu nodejs node dist/scripts/runMigrations.js
-if [ $? -ne 0 ]; then
-    echo "${RED}[Entrypoint] Migrations failed! Exiting...${NC}"
-    exit 1
-fi
-echo "${GREEN}[Entrypoint] Migrations completed successfully${NC}"
-
 # Переключаемся на пользователя nodejs и запускаем приложение
+# Миграции запускаются внутри приложения после инициализации базовых таблиц
 echo "${GREEN}[Entrypoint] Starting application as nodejs user...${NC}"
 exec gosu nodejs node dist/main.js
