@@ -76,7 +76,7 @@ jobs:
 
             cd /volume1/docker/meme-stealer
 
-          # Создание необходимых директорий если их нет
+            # Создание необходимых директорий если их нет
             echo "📁 Ensuring required directories exist..."
             mkdir -p sessions media
             echo "✅ Directories created/verified"
