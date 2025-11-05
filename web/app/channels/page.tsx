@@ -13,6 +13,7 @@ type SourceChannel = {
   channelId: string;
   channelName: string | null;
   enabled: boolean;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -117,8 +118,8 @@ export default function ChannelsPage() {
     }
   };
 
-  const handleDeleteChannel = async (id: number) => {
-    if (!confirm("Вы уверены, что хотите удалить этот канал?")) return;
+  const handleArchiveChannel = async (id: number) => {
+    if (!confirm("Вы уверены, что хотите архивировать этот канал?")) return;
 
     setActionLoading(true);
     try {
@@ -130,16 +131,44 @@ export default function ChannelsPage() {
         await loadChannels();
         toast({
           title: "Успешно",
-          description: "Канал удален",
+          description: "Канал архивирован",
         });
       } else {
-        throw new Error("Failed to delete channel");
+        throw new Error("Failed to archive channel");
       }
     } catch (error) {
-      console.error("Failed to delete channel:", error);
+      console.error("Failed to archive channel:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось удалить канал",
+        description: "Не удалось архивировать канал",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnarchiveChannel = async (id: number) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/channels/${id}/unarchive`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        await loadChannels();
+        toast({
+          title: "Успешно",
+          description: "Канал восстановлен",
+        });
+      } else {
+        throw new Error("Failed to unarchive channel");
+      }
+    } catch (error) {
+      console.error("Failed to unarchive channel:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось восстановить канал",
         variant: "destructive",
       });
     } finally {
@@ -198,63 +227,117 @@ export default function ChannelsPage() {
             </form>
           )}
 
-          {channels.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Нет добавленных каналов
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID / Username</TableHead>
-                  <TableHead>Название</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Добавлен</TableHead>
-                  <TableHead className="text-right">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {channels.map((channel) => (
-                  <TableRow key={channel.id}>
-                    <TableCell className="font-mono text-sm">
-                      {channel.channelId}
-                    </TableCell>
-                    <TableCell>
-                      {channel.channelName || (
-                        <span className="text-muted-foreground italic">Без названия</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={channel.enabled ? "default" : "secondary"}>
-                        {channel.enabled ? "Включен" : "Выключен"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(channel.createdAt).toLocaleDateString("ru-RU")}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleEnabled(channel)}
-                        disabled={actionLoading}
-                      >
-                        {channel.enabled ? "Выключить" : "Включить"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteChannel(channel.id)}
-                        disabled={actionLoading}
-                      >
-                        Удалить
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {/* Активные каналы */}
+          {(() => {
+            const activeChannels = channels.filter((c) => !c.archived);
+            const archivedChannels = channels.filter((c) => c.archived);
+
+            return (
+              <>
+                {activeChannels.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Нет добавленных каналов
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID / Username</TableHead>
+                        <TableHead>Название</TableHead>
+                        <TableHead>Статус</TableHead>
+                        <TableHead>Добавлен</TableHead>
+                        <TableHead className="text-right">Действия</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeChannels.map((channel) => (
+                        <TableRow key={channel.id}>
+                          <TableCell className="font-mono text-sm">
+                            {channel.channelId}
+                          </TableCell>
+                          <TableCell>
+                            {channel.channelName || (
+                              <span className="text-muted-foreground italic">Без названия</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={channel.enabled ? "default" : "secondary"}>
+                              {channel.enabled ? "Включен" : "Выключен"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(channel.createdAt).toLocaleDateString("ru-RU")}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleEnabled(channel)}
+                              disabled={actionLoading}
+                            >
+                              {channel.enabled ? "Выключить" : "Включить"}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleArchiveChannel(channel.id)}
+                              disabled={actionLoading}
+                            >
+                              Архивировать
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                {/* Архив */}
+                {archivedChannels.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Архив</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>ID / Username</TableHead>
+                          <TableHead>Название</TableHead>
+                          <TableHead>Архивирован</TableHead>
+                          <TableHead className="text-right">Действия</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {archivedChannels.map((channel) => (
+                          <TableRow key={channel.id} className="opacity-60">
+                            <TableCell className="font-mono text-sm">
+                              {channel.channelId}
+                            </TableCell>
+                            <TableCell>
+                              {channel.channelName || (
+                                <span className="text-muted-foreground italic">Без названия</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(channel.updatedAt).toLocaleDateString("ru-RU")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnarchiveChannel(channel.id)}
+                                disabled={actionLoading}
+                              >
+                                Восстановить
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
