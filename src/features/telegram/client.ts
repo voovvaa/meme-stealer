@@ -51,17 +51,36 @@ const resolvePassword = async (): Promise<string> => {
 };
 
 const ensureAuthorization = async (client: TelegramClient) => {
-  await client.start({
-    phoneNumber: async () => env.phoneNumber,
-    phoneCode: requestPhoneCode,
-    password: resolvePassword,
-    onError: (error) => {
-      logger.error({ err: error }, "Ошибка авторизации MTProto клиента");
-      throw error;
-    },
-  });
+  try {
+    logger.info("Вызываем client.start()...");
+    await client.start({
+      phoneNumber: async () => {
+        logger.info({ phoneNumber: env.phoneNumber }, "Callback phoneNumber вызван");
+        return env.phoneNumber;
+      },
+      phoneCode: async () => {
+        logger.info("Callback phoneCode вызван, запрашиваем код...");
+        const code = await requestPhoneCode();
+        logger.info("Код получен");
+        return code;
+      },
+      password: async () => {
+        logger.info("Callback password вызван");
+        const pwd = await resolvePassword();
+        logger.info({ hasPassword: !!pwd }, "Пароль получен");
+        return pwd;
+      },
+      onError: (error) => {
+        logger.error({ err: error }, "Ошибка в callback onError");
+        throw error;
+      },
+    });
 
-  logger.info("Авторизация MTProto клиента выполнена.");
+    logger.info("Авторизация MTProto клиента выполнена.");
+  } catch (error) {
+    logger.error({ err: error }, "Исключение в ensureAuthorization");
+    throw error;
+  }
 };
 
 export const initTelegramClient = async (): Promise<TelegramClient> => {
