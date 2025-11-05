@@ -6,11 +6,11 @@ import { logger } from "../../../core/logger.js";
 export const loadSessionString = async (path: string): Promise<string> => {
   try {
     const buffer = await readFile(path, { encoding: "utf-8" });
-    logger.debug({ path, length: buffer.length }, "Сессия загружена из файла");
+    logger.info({ path, length: buffer.length }, "Сессия загружена из файла");
     return buffer.trim();
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      logger.debug({ path }, "Файл сессии не найден, будет создан новый");
+      logger.info({ path }, "Файл сессии не найден, будет создан новый");
       return "";
     }
     logger.error({ error, path }, "Ошибка загрузки сессии");
