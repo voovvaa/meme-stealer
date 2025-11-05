@@ -8,8 +8,9 @@ if (process.env.NODE_ENV !== "production") {
 
 // Получаем уровень логирования напрямую из process.env
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
+type LogLevel = typeof logLevels[number];
 const LOG_LEVEL = process.env.LOG_LEVEL || "info";
-const logLevel = logLevels.includes(LOG_LEVEL as any) ? LOG_LEVEL : "info";
+const logLevel = logLevels.includes(LOG_LEVEL as LogLevel) ? LOG_LEVEL : "info";
 
 export const logger = pino({
   level: logLevel,

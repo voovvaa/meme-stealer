@@ -34,7 +34,7 @@ db.exec(`
 try {
   db.exec(`ALTER TABLE memes ADD COLUMN file_path TEXT;`);
   logger.info("Добавлена колонка file_path в таблицу memes");
-} catch (error) {
+} catch {
   // Колонка уже существует, это нормально
 }
 
