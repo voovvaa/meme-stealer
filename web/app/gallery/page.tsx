@@ -97,7 +97,7 @@ export default function GalleryPage() {
               style={{ animationDelay: `${(index % 20) * 50}ms` }}
             >
               <img
-                src={`/api/media/${post.filePath}`}
+                src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
                 alt={`Мем ${post.hash}`}
                 className="w-full h-auto"
                 loading="lazy"

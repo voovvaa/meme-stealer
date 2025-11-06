@@ -17,16 +17,37 @@ export async function GET(
     const filePath = path.join("/");
 
     // Определяем полный путь к файлу
-    // filePath из БД: "media/YYYY/MM/hash.ext"
-    // Нужно подняться на уровень выше от web/
-    const fullPath = join(process.cwd(), "..", filePath);
+    // В Docker: /app/media/YYYY/MM/hash.ext
+    // В development: ../media/YYYY/MM/hash.ext
+    // filePath приходит как: YYYY/MM/hash.ext (без префикса media/)
 
-    console.log("[Media API] Requested path array:", path);
-    console.log("[Media API] Joined filePath:", filePath);
-    console.log("[Media API] Full path:", fullPath);
-    console.log("[Media API] CWD:", process.cwd());
+    // Проверяем разные варианты путей
+    const possiblePaths = [
+      join(process.cwd(), "..", "media", filePath),  // Docker: /app/media/...
+      join("/app", "media", filePath),                // Абсолютный путь в Docker
+      join(process.cwd(), "media", filePath),        // Если запущено из корня
+      join("/tgcHelper", "media", filePath),         // Production вариант
+    ];
 
-    const fileBuffer = await readFile(fullPath);
+    let fileBuffer: Buffer | undefined;
+    let successPath = "";
+
+    for (const testPath of possiblePaths) {
+      try {
+        fileBuffer = await readFile(testPath);
+        successPath = testPath;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!fileBuffer) {
+      console.error("[Media API] File not found, tried paths:", possiblePaths);
+      throw new Error("File not found in any location");
+    }
+
+    console.log("[Media API] Successfully loaded from:", successPath);
 
     // Определяем MIME тип по расширению
     const ext = filePath.split(".").pop()?.toLowerCase();
@@ -40,7 +61,7 @@ export async function GET(
 
     const mimeType = mimeTypes[ext || ""] || "application/octet-stream";
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         "Content-Type": mimeType,
         "Cache-Control": "public, max-age=31536000, immutable",
