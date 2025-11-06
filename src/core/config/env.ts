@@ -9,19 +9,8 @@ if (process.env.NODE_ENV !== "production") {
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
 
 /**
- * Разбивает строку с разделителями-запятыми на массив
- */
-const splitEnvList = (value?: string): string[] =>
-  value
-    ? value
-        .split(",")
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0)
-    : [];
-
-/**
  * Единая схема для валидации и трансформации переменных окружения
- * Теперь используется только для LOG_LEVEL, SESSION_STORAGE_PATH, MEME_DB_PATH
+ * Используется только для LOG_LEVEL, SESSION_STORAGE_PATH, MEME_DB_PATH
  */
 const EnvSchema = z.object({
   LOG_LEVEL: z.string().optional(),
