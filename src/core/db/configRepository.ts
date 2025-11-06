@@ -1,18 +1,7 @@
-import Database from "better-sqlite3";
-
-import { ensureDirectoryForFile } from "../../utils/helpers.js";
+import { getDatabase } from "./database.js";
 import { logger } from "../logger.js";
 
-const MEME_DB_PATH = process.env.MEME_DB_PATH || "./sessions/memes.sqlite";
-
-ensureDirectoryForFile(MEME_DB_PATH);
-
-const db = new Database(MEME_DB_PATH, {
-  readonly: false,
-  fileMustExist: false,
-});
-
-db.pragma("journal_mode = WAL;");
+const db = getDatabase();
 
 // Таблица для основных настроек
 db.exec(`
