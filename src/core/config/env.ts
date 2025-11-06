@@ -9,19 +9,8 @@ if (process.env.NODE_ENV !== "production") {
 const logLevels = ["fatal", "error", "warn", "info", "debug", "trace"] as const;
 
 /**
- * Разбивает строку с разделителями-запятыми на массив
- */
-const splitEnvList = (value?: string): string[] =>
-  value
-    ? value
-        .split(",")
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0)
-    : [];
-
-/**
  * Единая схема для валидации и трансформации переменных окружения
- * Теперь используется только для LOG_LEVEL, SESSION_STORAGE_PATH, MEME_DB_PATH
+ * Используется только для LOG_LEVEL, SESSION_STORAGE_PATH, MEME_DB_PATH
  */
 const EnvSchema = z.object({
   LOG_LEVEL: z.string().optional(),
@@ -101,38 +90,10 @@ export const loadConfig = async (): Promise<AppConfig> => {
     };
   }
 
-  // Fallback на .env для обратной совместимости
-  console.warn("⚠️  Конфигурация не найдена в БД, используется .env");
-  console.warn("⚠️  Рекомендуется выполнить миграцию: npm run migrate-config");
-
-  const API_ID = process.env.API_ID;
-  const API_HASH = process.env.API_HASH;
-  const PHONE_NUMBER = process.env.PHONE_NUMBER;
-  const TARGET_CHANNEL_ID = process.env.TARGET_CHANNEL_ID;
-  const SOURCE_CHANNEL_IDS = process.env.SOURCE_CHANNEL_IDS;
-
-  if (!API_ID || !API_HASH || !PHONE_NUMBER || !TARGET_CHANNEL_ID || !SOURCE_CHANNEL_IDS) {
-    console.error("❌ Не все обязательные параметры заданы в .env");
-    console.error("❌ Выполните миграцию: npm run migrate-config");
-    process.exit(1);
-  }
-
-  return {
-    apiId: Number(API_ID),
-    apiHash: API_HASH,
-    phoneNumber: PHONE_NUMBER,
-    telegramPassword:
-      process.env.TELEGRAM_PASSWORD && process.env.TELEGRAM_PASSWORD.length > 0
-        ? process.env.TELEGRAM_PASSWORD
-        : undefined,
-    targetChannelId: TARGET_CHANNEL_ID,
-    sourceChannelIds: splitEnvList(SOURCE_CHANNEL_IDS),
-    adKeywords: splitEnvList(process.env.AD_KEYWORDS),
-    enableQueue: process.env.ENABLE_QUEUE === "true" || process.env.ENABLE_QUEUE === "1",
-    publishIntervalMin: Number(process.env.PUBLISH_INTERVAL_MIN) || 60,
-    publishIntervalMax: Number(process.env.PUBLISH_INTERVAL_MAX) || 300,
-    ...systemEnv,
-  };
+  // Конфигурация не найдена в БД - открыть веб-интерфейс для настройки
+  console.error("❌ Конфигурация не найдена в базе данных");
+  console.error("📝 Откройте веб-интерфейс (http://localhost:3333) и настройте бота в разделе Settings");
+  process.exit(1);
 };
 
 // Глобальная конфигурация (инициализируется асинхронно)

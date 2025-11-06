@@ -4,25 +4,6 @@ import { logger } from "../logger.js";
 
 const db = getDatabase();
 
-// Создаем таблицу очереди публикаций
-db.exec(`
-  CREATE TABLE IF NOT EXISTS post_queue (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    media_data TEXT NOT NULL,
-    source_channel_id TEXT NOT NULL,
-    source_message_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    scheduled_at TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    processed_at TEXT,
-    error_message TEXT
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_queue_status ON post_queue(status);
-  CREATE INDEX IF NOT EXISTS idx_queue_scheduled ON post_queue(scheduled_at);
-  CREATE INDEX IF NOT EXISTS idx_queue_created ON post_queue(created_at);
-`);
-
 export type QueueStatus = "pending" | "processing" | "completed" | "failed";
 
 export type QueueItem = {

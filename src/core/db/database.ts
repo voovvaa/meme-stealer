@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 
 import { ensureDirectoryForFile } from "../../utils/helpers.js";
 import { logger } from "../logger.js";
+import { initializeDatabase } from "./initDatabase.js";
 
 /**
  * Единый инстанс базы данных для всего приложения.
@@ -10,6 +11,7 @@ import { logger } from "../logger.js";
 class DatabaseConnection {
   private static instance: ReturnType<typeof Database> | null = null;
   private static dbPath: string = process.env.MEME_DB_PATH || "./sessions/memes.sqlite";
+  private static initialized: boolean = false;
 
   /**
    * Получить singleton инстанс базы данных
@@ -17,6 +19,7 @@ class DatabaseConnection {
   public static getInstance(): ReturnType<typeof Database> {
     if (!DatabaseConnection.instance) {
       DatabaseConnection.instance = DatabaseConnection.createConnection();
+      DatabaseConnection.initializeTables();
     }
     return DatabaseConnection.instance;
   }
@@ -46,6 +49,16 @@ class DatabaseConnection {
   }
 
   /**
+   * Инициализировать структуру таблиц
+   */
+  private static initializeTables(): void {
+    if (!DatabaseConnection.initialized && DatabaseConnection.instance) {
+      initializeDatabase(DatabaseConnection.instance);
+      DatabaseConnection.initialized = true;
+    }
+  }
+
+  /**
    * Закрыть подключение к базе данных
    */
   public static close(): void {
@@ -57,6 +70,7 @@ class DatabaseConnection {
         logger.error({ err: error }, "Ошибка при закрытии базы данных");
       } finally {
         DatabaseConnection.instance = null;
+        DatabaseConnection.initialized = false;
       }
     }
   }

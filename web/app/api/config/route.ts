@@ -26,11 +26,27 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     configRepository.saveConfig(body);
-    return NextResponse.json({ success: true });
+    const savedConfig = configRepository.getConfig();
+    return NextResponse.json(savedConfig);
   } catch (error) {
     console.error("Error saving config:", error);
     return NextResponse.json(
       { error: "Failed to save config" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    configRepository.saveConfig(body);
+    const savedConfig = configRepository.getConfig();
+    return NextResponse.json(savedConfig);
+  } catch (error) {
+    console.error("Error creating config:", error);
+    return NextResponse.json(
+      { error: "Failed to create config" },
       { status: 500 }
     );
   }

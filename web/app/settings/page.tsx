@@ -51,30 +51,35 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!config) return;
 
     setSaving(true);
 
     try {
+      // Используем POST для создания и PUT для обновления
+      const method = config ? "PUT" : "POST";
       const res = await fetch("/api/config", {
-        method: "PUT",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiId: config.apiId,
-          apiHash: config.apiHash,
-          phoneNumber: config.phoneNumber,
-          telegramPassword: config.telegramPassword || null,
-          targetChannelId: config.targetChannelId,
-          enableQueue: config.enableQueue,
-          publishIntervalMin: config.publishIntervalMin,
-          publishIntervalMax: config.publishIntervalMax,
+          apiId: currentConfig.apiId,
+          apiHash: currentConfig.apiHash,
+          phoneNumber: currentConfig.phoneNumber,
+          telegramPassword: currentConfig.telegramPassword || null,
+          targetChannelId: currentConfig.targetChannelId,
+          enableQueue: currentConfig.enableQueue,
+          publishIntervalMin: currentConfig.publishIntervalMin,
+          publishIntervalMax: currentConfig.publishIntervalMax,
         }),
       });
 
       if (res.ok) {
+        const savedConfig = await res.json();
+        setConfig(savedConfig);
         toast({
           title: "Успешно",
-          description: "Настройки сохранены! Конфигурация будет перезагружена автоматически.",
+          description: config
+            ? "Настройки сохранены! Конфигурация будет перезагружена автоматически."
+            : "Конфигурация создана! Перезапустите бота для применения изменений.",
         });
       } else {
         throw new Error("Failed to save config");
@@ -95,19 +100,20 @@ export default function SettingsPage() {
     return <div className="p-8">Загрузка...</div>;
   }
 
-  if (!config) {
-    return (
-      <div className="p-8">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-center">
-              Конфигурация не найдена. Выполните миграцию: npm run migrate-config
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Если конфига нет, создаем пустой объект для первоначальной настройки
+  const currentConfig = config || {
+    id: 1,
+    apiId: 0,
+    apiHash: "",
+    phoneNumber: "",
+    telegramPassword: null,
+    targetChannelId: "",
+    enableQueue: true,
+    publishIntervalMin: 60,
+    publishIntervalMax: 300,
+    needsReload: false,
+    updatedAt: new Date().toISOString(),
+  };
 
   return (
     <div className="p-8">
@@ -131,8 +137,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">API ID *</label>
                 <Input
                   type="number"
-                  value={config.apiId}
-                  onChange={(e) => setConfig({ ...config, apiId: parseInt(e.target.value) || 0 })}
+                  value={currentConfig.apiId}
+                  onChange={(e) => setConfig({ ...currentConfig, apiId: parseInt(e.target.value) || 0 })}
                   required
                 />
               </div>
@@ -141,8 +147,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">API Hash *</label>
                 <Input
                   type="text"
-                  value={config.apiHash}
-                  onChange={(e) => setConfig({ ...config, apiHash: e.target.value })}
+                  value={currentConfig.apiHash}
+                  onChange={(e) => setConfig({ ...currentConfig, apiHash: e.target.value })}
                   required
                 />
               </div>
@@ -151,8 +157,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">Номер телефона *</label>
                 <Input
                   type="text"
-                  value={config.phoneNumber}
-                  onChange={(e) => setConfig({ ...config, phoneNumber: e.target.value })}
+                  value={currentConfig.phoneNumber}
+                  onChange={(e) => setConfig({ ...currentConfig, phoneNumber: e.target.value })}
                   placeholder="+79991234567"
                   required
                 />
@@ -162,8 +168,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">Пароль 2FA (опционально)</label>
                 <Input
                   type="password"
-                  value={config.telegramPassword || ""}
-                  onChange={(e) => setConfig({ ...config, telegramPassword: e.target.value || null })}
+                  value={currentConfig.telegramPassword || ""}
+                  onChange={(e) => setConfig({ ...currentConfig, telegramPassword: e.target.value || null })}
                   placeholder="Если включена двухфакторная аутентификация"
                 />
               </div>
@@ -177,8 +183,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">ID или Username целевого канала *</label>
                 <Input
                   type="text"
-                  value={config.targetChannelId}
-                  onChange={(e) => setConfig({ ...config, targetChannelId: e.target.value })}
+                  value={currentConfig.targetChannelId}
+                  onChange={(e) => setConfig({ ...currentConfig, targetChannelId: e.target.value })}
                   placeholder="-1001234567890 или @my_channel"
                   required
                 />
@@ -196,8 +202,8 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   id="enableQueue"
-                  checked={config.enableQueue}
-                  onChange={(e) => setConfig({ ...config, enableQueue: e.target.checked })}
+                  checked={currentConfig.enableQueue}
+                  onChange={(e) => setConfig({ ...currentConfig, enableQueue: e.target.checked })}
                   className="w-4 h-4"
                 />
                 <label htmlFor="enableQueue" className="text-sm font-medium cursor-pointer">
@@ -212,8 +218,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">Минимальный интервал (секунды) *</label>
                 <Input
                   type="number"
-                  value={config.publishIntervalMin}
-                  onChange={(e) => setConfig({ ...config, publishIntervalMin: parseInt(e.target.value) || 60 })}
+                  value={currentConfig.publishIntervalMin}
+                  onChange={(e) => setConfig({ ...currentConfig, publishIntervalMin: parseInt(e.target.value) || 60 })}
                   min="10"
                   required
                 />
@@ -223,8 +229,8 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">Максимальный интервал (секунды) *</label>
                 <Input
                   type="number"
-                  value={config.publishIntervalMax}
-                  onChange={(e) => setConfig({ ...config, publishIntervalMax: parseInt(e.target.value) || 300 })}
+                  value={currentConfig.publishIntervalMax}
+                  onChange={(e) => setConfig({ ...currentConfig, publishIntervalMax: parseInt(e.target.value) || 300 })}
                   min="10"
                   required
                 />
