@@ -41,6 +41,5 @@ find /app/media -type f -exec chmod 664 {} \;
 find /app/media -type f -exec chown nodejs:nodejs {} \;
 
 # Переключаемся на пользователя nodejs и запускаем приложение
-# Миграции запускаются внутри приложения после инициализации базовых таблиц
 echo "${GREEN}[Entrypoint] Starting application as nodejs user...${NC}"
 exec gosu nodejs node dist/main.js
