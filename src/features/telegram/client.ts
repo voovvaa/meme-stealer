@@ -83,7 +83,10 @@ const ensureAuthorization = async (client: TelegramClient) => {
   }
 };
 
-export const initTelegramClient = async (): Promise<TelegramClient> => {
+export const initTelegramClient = async (): Promise<{
+  client: TelegramClient;
+  postQueue?: PostQueue;
+}> => {
   logger.info("Начинаем инициализацию Telegram клиента...");
 
   const sessionString = await loadSessionString(env.sessionStoragePath);
@@ -123,5 +126,5 @@ export const initTelegramClient = async (): Promise<TelegramClient> => {
   const allowedSources = env.sourceChannelIds.map((x) => x.toString());
   logger.info({ sources: allowedSources, target: env.targetChannelId }, "MTProto клиент запущен.");
 
-  return client;
+  return { client, postQueue };
 };

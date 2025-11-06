@@ -30,6 +30,15 @@ const getChannelMatcher = () => {
   return channelMatcher;
 };
 
+/**
+ * Сбрасывает кеши фильтров при перезагрузке конфигурации
+ */
+export const resetFilters = () => {
+  isAdContent = null;
+  channelMatcher = null;
+  logger.debug("Фильтры сброшены для перезагрузки конфигурации");
+};
+
 type ChannelMeta = {
   id: bigInt.BigInteger;
   username: string | null;
@@ -180,17 +189,45 @@ const handleChannelPost = async (
   }
 };
 
+// Хранение ссылок для перерегистрации обработчика
+let currentEventHandler: ((event: NewMessageEvent) => void) | null = null;
+let currentNewMessage: NewMessage | null = null;
+let currentClient: TelegramClient | null = null;
+
 /**
  * Регистрирует обработчик постов из каналов
  */
 export const registerChannelPostHandler = (client: TelegramClient, postQueue?: PostQueue) => {
-  // Получаем sourceChannelIds из env при вызове функции, а не при импорте модуля
+  // Удаляем старый обработчик, если он существует
+  if (currentClient && currentEventHandler && currentNewMessage) {
+    try {
+      currentClient.removeEventHandler(currentEventHandler, currentNewMessage);
+      logger.debug("Старый обработчик событий удалён");
+    } catch (error) {
+      logger.warn({ err: error }, "Ошибка при удалении старого обработчика");
+    }
+  }
+
+  // Сбрасываем кеши фильтров
+  resetFilters();
+
+  // Получаем sourceChannelIds из env при вызове функции
   const sourceChannelIds = env.sourceChannelIds;
 
-  client.addEventHandler(
-    (event) => handleChannelPost(client, event, postQueue),
-    new NewMessage({
-      chats: sourceChannelIds,
-    }),
+  // Создаём новый обработчик и event builder
+  const eventHandler = (event: NewMessageEvent) => handleChannelPost(client, event, postQueue);
+  const newMessage = new NewMessage({ chats: sourceChannelIds });
+
+  // Регистрируем обработчик
+  client.addEventHandler(eventHandler, newMessage);
+
+  // Сохраняем ссылки для последующей перерегистрации
+  currentEventHandler = eventHandler;
+  currentNewMessage = newMessage;
+  currentClient = client;
+
+  logger.info(
+    { sourceChannelsCount: sourceChannelIds.length },
+    "Обработчик постов зарегистрирован для каналов",
   );
 };
