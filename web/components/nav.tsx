@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BarChart3, Radio, Filter, Settings, History, Clock } from "lucide-react";
+import { BarChart3, Radio, Filter, Settings, History, Clock, Images } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: BarChart3 },
   { href: "/channels", label: "Каналы", icon: Radio },
   { href: "/keywords", label: "Фильтры", icon: Filter },
   { href: "/queue", label: "Отложенные", icon: Clock },
+  { href: "/gallery", label: "Галерея", icon: Images },
   { href: "/history", label: "История", icon: History },
   { href: "/settings", label: "Настройки", icon: Settings },
 ];
