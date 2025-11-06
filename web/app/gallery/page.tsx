@@ -22,6 +22,8 @@ function ParallaxCard({
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -57,6 +59,10 @@ function ParallaxCard({
     };
   }, []);
 
+  if (imageError) {
+    return null;
+  }
+
   return (
     <div
       ref={cardRef}
@@ -79,17 +85,28 @@ function ParallaxCard({
         glarePosition="all"
         className="w-full"
       >
-        <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
-          <img
-            src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
-            alt={`Мем ${post.hash}`}
-            className="w-full h-auto select-none transform-gpu"
-            loading="lazy"
-            draggable={false}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+        <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl relative">
+          <div className="relative">
+            {/* Изображение - всегда присутствует чтобы занимать место */}
+            <img
+              src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
+              alt={`Мем ${post.hash}`}
+              className={`w-full h-auto select-none transform-gpu transition-opacity duration-700 ease-out ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+              draggable={false}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+
+            {/* Placeholder поверх изображения пока оно грузится */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-muted overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              </div>
+            )}
+          </div>
         </Card>
       </Tilt>
     </div>
