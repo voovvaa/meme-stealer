@@ -18,21 +18,14 @@ fi
 # Устанавливаем права доступа на директорию sessions
 echo "${YELLOW}[Entrypoint] Setting permissions for /app/sessions...${NC}"
 chown -R nodejs:nodejs /app/sessions
-chmod -R 755 /app/sessions
 
-# Если есть файл базы данных, устанавливаем на него права
-if [ -f "/app/sessions/memes.sqlite" ]; then
-    echo "${YELLOW}[Entrypoint] Setting permissions for database file...${NC}"
-    chown nodejs:nodejs /app/sessions/memes.sqlite
-    chmod 644 /app/sessions/memes.sqlite
-fi
+# Устанавливаем права 775 на директорию (владелец и группа могут писать)
+chmod 775 /app/sessions
 
-# Если есть файл сессии, устанавливаем на него права
-if [ -f "/app/sessions/client.session" ]; then
-    echo "${YELLOW}[Entrypoint] Setting permissions for session file...${NC}"
-    chown nodejs:nodejs /app/sessions/client.session
-    chmod 644 /app/sessions/client.session
-fi
+# Устанавливаем права на все файлы в директории sessions
+# Это гарантирует, что nodejs сможет читать/изменять/удалять любые файлы
+find /app/sessions -type f -exec chmod 664 {} \;
+find /app/sessions -type f -exec chown nodejs:nodejs {} \;
 
 # Создаем и устанавливаем права на директорию media
 if [ ! -d "/app/media" ]; then
@@ -41,7 +34,11 @@ if [ ! -d "/app/media" ]; then
 fi
 echo "${YELLOW}[Entrypoint] Setting permissions for /app/media...${NC}"
 chown -R nodejs:nodejs /app/media
-chmod -R 755 /app/media
+chmod 775 /app/media
+
+# Устанавливаем права на все файлы в директории media
+find /app/media -type f -exec chmod 664 {} \;
+find /app/media -type f -exec chown nodejs:nodejs {} \;
 
 # Переключаемся на пользователя nodejs и запускаем приложение
 # Миграции запускаются внутри приложения после инициализации базовых таблиц
