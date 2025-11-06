@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Tilt from "react-parallax-tilt";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
@@ -91,21 +92,32 @@ export default function GalleryPage() {
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
           {posts.map((post, index) => (
-            <Card
+            <Tilt
               key={post.id}
-              className="break-inside-avoid overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-300 animate-fadeIn"
-              style={{ animationDelay: `${(index % 20) * 50}ms` }}
+              tiltMaxAngleX={8}
+              tiltMaxAngleY={8}
+              scale={1.05}
+              transitionSpeed={1500}
+              glareEnable={true}
+              glareMaxOpacity={0.2}
+              glareColor="rgba(255, 255, 255, 0.5)"
+              glarePosition="all"
+              className="break-inside-avoid animate-fadeIn"
+              style={{ animationDelay: `${(index % 20) * 75}ms` }}
             >
-              <img
-                src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
-                alt={`Мем ${post.hash}`}
-                className="w-full h-auto"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </Card>
+              <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
+                <img
+                  src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
+                  alt={`Мем ${post.hash}`}
+                  className="w-full h-auto select-none"
+                  loading="lazy"
+                  draggable={false}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </Card>
+            </Tilt>
           ))}
         </div>
       )}
