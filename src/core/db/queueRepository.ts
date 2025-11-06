@@ -1,19 +1,8 @@
-import Database from "better-sqlite3";
-
+import { getDatabase } from "./database.js";
 import type { HashedMediaFile } from "../../types/media.js";
-import { ensureDirectoryForFile } from "../../utils/helpers.js";
 import { logger } from "../logger.js";
 
-const MEME_DB_PATH = process.env.MEME_DB_PATH || "./sessions/memes.sqlite";
-
-ensureDirectoryForFile(MEME_DB_PATH);
-
-const db = new Database(MEME_DB_PATH, {
-  readonly: false,
-  fileMustExist: false,
-});
-
-db.pragma("journal_mode = WAL;");
+const db = getDatabase();
 
 // Создаем таблицу очереди публикаций
 db.exec(`
