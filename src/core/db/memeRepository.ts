@@ -3,22 +3,6 @@ import { logger } from "../logger.js";
 
 const db = getDatabase();
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS memes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    hash TEXT NOT NULL UNIQUE,
-    source_channel_id TEXT NOT NULL,
-    source_message_id INTEGER NOT NULL,
-    target_message_id INTEGER,
-    file_path TEXT,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_memes_hash ON memes(hash);
-  CREATE INDEX IF NOT EXISTS idx_memes_created_at ON memes(created_at);
-  CREATE INDEX IF NOT EXISTS idx_memes_source_channel ON memes(source_channel_id);
-`);
-
 const selectByHashStmt = db.prepare("SELECT 1 FROM memes WHERE hash = ? LIMIT 1");
 const insertStmt = db.prepare(
   `

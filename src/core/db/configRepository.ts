@@ -3,50 +3,6 @@ import { logger } from "../logger.js";
 
 const db = getDatabase();
 
-// Таблица для основных настроек
-db.exec(`
-  CREATE TABLE IF NOT EXISTS config (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    api_id INTEGER NOT NULL,
-    api_hash TEXT NOT NULL,
-    phone_number TEXT NOT NULL,
-    telegram_password TEXT,
-    target_channel_id TEXT NOT NULL,
-    enable_queue INTEGER NOT NULL DEFAULT 1,
-    publish_interval_min INTEGER NOT NULL DEFAULT 60,
-    publish_interval_max INTEGER NOT NULL DEFAULT 300,
-    needs_reload INTEGER NOT NULL DEFAULT 0,
-    updated_at TEXT NOT NULL
-  );
-`);
-
-// Таблица для отслеживаемых каналов
-db.exec(`
-  CREATE TABLE IF NOT EXISTS source_channels (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    channel_id TEXT NOT NULL UNIQUE,
-    channel_name TEXT,
-    enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_source_channels_enabled ON source_channels(enabled);
-`);
-
-// Таблица для ключевых слов фильтрации
-db.exec(`
-  CREATE TABLE IF NOT EXISTS filter_keywords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    keyword TEXT NOT NULL UNIQUE,
-    enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_filter_keywords_enabled ON filter_keywords(enabled);
-`);
-
 // Типы
 export type Config = {
   id: 1;
