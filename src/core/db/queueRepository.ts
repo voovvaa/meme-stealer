@@ -1,5 +1,5 @@
-import type { HashedMediaFile } from "../../types/media.js";
 import { getDatabase } from "./database.js";
+import type { HashedMediaFile } from "../../types/media.js";
 import { logger } from "../logger.js";
 
 const db = getDatabase();

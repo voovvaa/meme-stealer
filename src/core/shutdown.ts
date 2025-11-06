@@ -1,4 +1,5 @@
 import type { TelegramClient } from "telegram";
+
 import { closeDatabase } from "./db/database.js";
 import { logger } from "./logger.js";
 

@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+
 import { ensureDirectoryForFile } from "../../utils/helpers.js";
 import { logger } from "../logger.js";
 
