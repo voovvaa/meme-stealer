@@ -3,14 +3,27 @@ import { configRepository } from "../db/configRepository.js";
 import { logger } from "../logger.js";
 
 /**
+ * Callback, вызываемый после перезагрузки конфигурации
+ */
+type ConfigReloadCallback = () => void;
+
+/**
  * Сервис для отслеживания изменений конфигурации
  */
 export class ConfigWatcher {
   private intervalId: NodeJS.Timeout | null = null;
   private checkInterval: number;
+  private reloadCallbacks: ConfigReloadCallback[] = [];
 
   constructor(checkInterval: number = 5000) {
     this.checkInterval = checkInterval;
+  }
+
+  /**
+   * Добавить callback для вызова при перезагрузке конфигурации
+   */
+  onReload(callback: ConfigReloadCallback): void {
+    this.reloadCallbacks.push(callback);
   }
 
   /**
@@ -67,8 +80,14 @@ export class ConfigWatcher {
           "Конфигурация успешно перезагружена",
         );
 
-        // Можно добавить дополнительные действия при изменении конфигурации
-        // Например, переподключение к каналам или обновление фильтров
+        // Вызываем callback'и для уведомления о перезагрузке
+        for (const callback of this.reloadCallbacks) {
+          try {
+            callback();
+          } catch (error) {
+            logger.error({ err: error }, "Ошибка в callback перезагрузки конфигурации");
+          }
+        }
       }
     } catch (error) {
       logger.error({ err: error }, "Ошибка при проверке обновлений конфигурации");

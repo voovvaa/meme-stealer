@@ -2,14 +2,21 @@ import { initConfig } from "./core/config/env.js";
 import { logger } from "./core/logger.js";
 import { configWatcher } from "./core/services/configWatcher.js";
 import { initTelegramClient } from "./features/telegram/client.js";
+import { registerChannelPostHandler } from "./features/telegram/handlers/postHandler.js";
 
 const run = async () => {
   // Инициализируем конфигурацию перед стартом
   await initConfig();
   logger.info("Конфигурация загружена");
 
-  await initTelegramClient();
+  const { client, postQueue } = await initTelegramClient();
   logger.info("MTProto клиент успешно запущен и ожидает новые сообщения.");
+
+  // Регистрируем callback для перерегистрации обработчика при изменении конфигурации
+  configWatcher.onReload(() => {
+    logger.info("Перерегистрация обработчика постов после перезагрузки конфигурации...");
+    registerChannelPostHandler(client, postQueue);
+  });
 
   // Запускаем отслеживание изменений конфигурации
   configWatcher.start();
