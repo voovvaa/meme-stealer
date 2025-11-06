@@ -22,6 +22,9 @@ export async function GET(request: Request) {
       (post) => post.filePath && post.targetMessageId
     );
 
+    console.log("[Gallery API] First post filePath:", galleryPosts[0]?.filePath);
+    console.log("[Gallery API] Total gallery posts:", galleryPosts.length);
+
     return NextResponse.json({
       posts: galleryPosts,
       hasMore: offset + limit < totalCount,

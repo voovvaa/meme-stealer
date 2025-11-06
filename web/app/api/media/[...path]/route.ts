@@ -15,7 +15,16 @@ export async function GET(
   try {
     const { path } = await params;
     const filePath = path.join("/");
+
+    // Определяем полный путь к файлу
+    // filePath из БД: "media/YYYY/MM/hash.ext"
+    // Нужно подняться на уровень выше от web/
     const fullPath = join(process.cwd(), "..", filePath);
+
+    console.log("[Media API] Requested path array:", path);
+    console.log("[Media API] Joined filePath:", filePath);
+    console.log("[Media API] Full path:", fullPath);
+    console.log("[Media API] CWD:", process.cwd());
 
     const fileBuffer = await readFile(fullPath);
 
