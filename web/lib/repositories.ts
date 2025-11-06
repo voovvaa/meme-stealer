@@ -149,6 +149,37 @@ const rowToPost = (row: {
   createdAt: row.created_at,
 });
 
+export type QueueItem = {
+  id: number;
+  sourceChannelId: string;
+  sourceMessageId: number;
+  status: string;
+  scheduledAt: string;
+  createdAt: string;
+  processedAt: string | null;
+  errorMessage: string | null;
+};
+
+const rowToQueueItem = (row: {
+  id: number;
+  source_channel_id: string;
+  source_message_id: number;
+  status: string;
+  scheduled_at: string;
+  created_at: string;
+  processed_at: string | null;
+  error_message: string | null;
+}): QueueItem => ({
+  id: row.id,
+  sourceChannelId: row.source_channel_id,
+  sourceMessageId: row.source_message_id,
+  status: row.status,
+  scheduledAt: row.scheduled_at,
+  createdAt: row.created_at,
+  processedAt: row.processed_at,
+  errorMessage: row.error_message,
+});
+
 // ===== Config Repository =====
 
 export const configRepository = {
@@ -420,5 +451,35 @@ export const statsRepository = {
       `)
       .all(days) as Array<{ date: string; count: number }>;
     return rows;
+  },
+
+  getQueuedPosts(limit: number = 50, offset: number = 0): QueueItem[] {
+    const db = getDb();
+    const rows = db
+      .prepare(`
+        SELECT
+          id,
+          source_channel_id,
+          source_message_id,
+          status,
+          scheduled_at,
+          created_at,
+          processed_at,
+          error_message
+        FROM post_queue
+        WHERE status = 'pending'
+        ORDER BY scheduled_at ASC
+        LIMIT ? OFFSET ?
+      `)
+      .all(limit, offset);
+    return rows.map((row) => rowToQueueItem(row as any));
+  },
+
+  getQueuedPostsCount(): number {
+    const db = getDb();
+    const row = db
+      .prepare("SELECT COUNT(*) as count FROM post_queue WHERE status = 'pending'")
+      .get() as { count: number };
+    return row.count;
   },
 };
