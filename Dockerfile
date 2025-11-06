@@ -63,7 +63,8 @@ RUN apt-get update \
   && gosu nobody true
 
 # Создаем non-root пользователя для безопасности
-RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
+# Используем фиксированный GID 1001 для совместимости с веб-контейнером
+RUN groupadd -r -g 1001 nodejs && useradd -r -u 1001 -g nodejs nodejs
 
 # Устанавливаем переменные окружения
 ENV NODE_ENV=production \

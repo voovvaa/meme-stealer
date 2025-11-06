@@ -15,9 +15,14 @@ if [ ! -d "/app/sessions" ]; then
 fi
 
 # Устанавливаем права на директорию sessions для пользователя nextjs
+# Важно: используем 775 для директорий и 664 для файлов, чтобы оба контейнера (bot и web)
+# могли читать и писать в общие файлы (особенно SQLite базу данных)
 echo "${YELLOW}[Web Entrypoint] Setting permissions for /app/sessions...${NC}"
 chown -R nextjs:nodejs /app/sessions
-chmod -R 755 /app/sessions
+# Устанавливаем 775 для директорий (rwxrwxr-x)
+find /app/sessions -type d -exec chmod 775 {} \;
+# Устанавливаем 664 для файлов (rw-rw-r--) - важно для SQLite WAL файлов
+find /app/sessions -type f -exec chmod 664 {} \;
 
 # Запускаем приложение от пользователя nextjs
 echo "${GREEN}[Web Entrypoint] Starting Next.js server as nextjs user...${NC}"
