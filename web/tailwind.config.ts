@@ -11,12 +11,23 @@ const config: Config = {
     extend: {
       keyframes: {
         fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(30px) scale(0.95)" },
-          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+          "0%": {
+            opacity: "0",
+            transform: "translate3d(0, 20px, 0) scale3d(0.98, 0.98, 1)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translate3d(0, 0, 0) scale3d(1, 1, 1)"
+          },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
         },
       },
       animation: {
-        fadeIn: "fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        fadeIn: "fadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        shimmer: "shimmer 2s infinite",
       },
       colors: {
         background: "hsl(var(--background))",
