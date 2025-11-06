@@ -21,10 +21,20 @@ function ParallaxCard({
   index: number;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const rafRef = useRef<number | null>(null);
+
+  // Проверяем сразу при монтировании - может изображение уже в кеше?
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalHeight !== 0) {
+      // Изображение уже загружено из кеша!
+      setImageLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,10 +99,11 @@ function ParallaxCard({
           <div className="relative">
             {/* Изображение - всегда присутствует чтобы занимать место */}
             <img
+              ref={imgRef}
               src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
               alt={`Мем ${post.hash}`}
-              className={`w-full h-auto select-none transform-gpu transition-opacity duration-700 ease-out ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
+              className={`w-full h-auto select-none transform-gpu ${
+                imageLoaded ? 'opacity-100' : 'opacity-0 transition-opacity duration-1000 ease-out'
               }`}
               loading="lazy"
               draggable={false}
