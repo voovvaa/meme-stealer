@@ -1,8 +1,8 @@
+import { initializeDatabase } from "@meme-stealer/shared";
 import Database from "better-sqlite3";
 
 import { ensureDirectoryForFile } from "../../utils/helpers.js";
 import { logger } from "../logger.js";
-import { initializeDatabase } from "./initDatabase.js";
 
 /**
  * Единый инстанс базы данных для всего приложения.
@@ -53,7 +53,7 @@ class DatabaseConnection {
    */
   private static initializeTables(): void {
     if (!DatabaseConnection.initialized && DatabaseConnection.instance) {
-      initializeDatabase(DatabaseConnection.instance);
+      initializeDatabase(DatabaseConnection.instance, { logger });
       DatabaseConnection.initialized = true;
     }
   }
