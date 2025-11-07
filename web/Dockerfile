@@ -5,14 +5,30 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
-COPY package*.json ./
+# Copy and build shared package first
+COPY packages/shared/package*.json ./packages/shared/
+WORKDIR /app/packages/shared
+RUN npm ci
+
+COPY packages/shared ./
+RUN npm run build
+
+# Copy and install web dependencies
+WORKDIR /app/web
+COPY web/package*.json ./
 RUN npm ci
 
 # Builder stage
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy built shared package
+COPY --from=deps /app/packages/shared ./packages/shared
+
+# Copy web with dependencies
+WORKDIR /app/web
+COPY --from=deps /app/web/node_modules ./node_modules
+COPY web .
 
 # Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -33,12 +49,12 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs --ingroup nodejs
 
 # Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
 
 # Copy entrypoint
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY web/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3333

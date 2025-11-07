@@ -10,7 +10,16 @@ RUN apt-get update \
     build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-# Копируем только файлы зависимостей для кэширования слоя
+# Copy and build shared package first
+COPY packages/shared/package*.json ./packages/shared/
+WORKDIR /app/packages/shared
+RUN npm ci
+
+COPY packages/shared ./
+RUN npm run build
+
+# Копируем только файлы зависимостей бота для кэширования слоя
+WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Устанавливаем все зависимости (включая dev) для сборки
@@ -21,7 +30,10 @@ FROM deps AS builder
 
 WORKDIR /app
 
-# Копируем исходный код
+# Копируем built shared package
+COPY --from=deps /app/packages/shared ./packages/shared
+
+# Копируем исходный код бота
 COPY . .
 
 # Собираем проект
@@ -39,7 +51,16 @@ RUN apt-get update \
     build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-# Копируем package files
+# Copy built shared package
+COPY packages/shared/package*.json ./packages/shared/
+WORKDIR /app/packages/shared
+RUN npm ci --omit=dev
+
+COPY packages/shared ./
+RUN npm run build
+
+# Копируем package files бота
+WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Устанавливаем только production зависимости
@@ -69,6 +90,9 @@ RUN groupadd -r -g 1001 nodejs && useradd -r -u 1001 -g nodejs nodejs
 # Устанавливаем переменные окружения
 ENV NODE_ENV=production \
     NODE_OPTIONS="--max-old-space-size=512"
+
+# Копируем shared package
+COPY --from=prod-deps --chown=nodejs:nodejs /app/packages/shared ./packages/shared
 
 # Копируем production зависимости
 COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
