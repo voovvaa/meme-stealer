@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { sourceChannelsRepository } from "@/lib/repositories";
 import { SourceChannelUpdateSchema, IdParamSchema, validate } from "@meme-stealer/shared";
 
@@ -41,7 +42,7 @@ export async function PUT(
     sourceChannelsRepository.update(id, validation.data);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating channel:", error);
+    logger.error({ err: error }, "Error updating channel:");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update channel" },
       { status: 500 }
@@ -74,7 +75,7 @@ export async function DELETE(
     sourceChannelsRepository.archive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error archiving channel:", error);
+    logger.error({ err: error }, "Error archiving channel:");
     return NextResponse.json(
       { error: "Failed to archive channel" },
       { status: 500 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logger } from "./lib/logger";
 
 /**
  * Public endpoints that don't require Basic Auth
@@ -13,13 +14,18 @@ const PUBLIC_ENDPOINTS = [
  * Log request information
  */
 function logRequest(request: NextRequest, authenticated: boolean) {
-  const timestamp = new Date().toISOString();
   const method = request.method;
   const path = request.nextUrl.pathname;
   const userAgent = request.headers.get("user-agent") || "unknown";
   const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
 
-  console.log(`[${timestamp}] ${method} ${path} | Auth: ${authenticated ? "✓" : "✗"} | IP: ${ip} | UA: ${userAgent.slice(0, 50)}`);
+  logger.info({
+    method,
+    path,
+    authenticated,
+    ip,
+    userAgent: userAgent.slice(0, 50)
+  }, "Request");
 }
 
 export function middleware(request: NextRequest) {
@@ -50,7 +56,7 @@ export function middleware(request: NextRequest) {
 
   // Если не настроен Basic Auth, пропускаем (только для dev)
   if (!basicAuthUser || !basicAuthPassword) {
-    console.warn("[Auth] WARNING: Basic Auth is not configured! Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD");
+    logger.warn("Basic Auth is not configured! Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD");
     logRequest(request, false);
     return NextResponse.next();
   }
@@ -91,7 +97,7 @@ export function middleware(request: NextRequest) {
     logRequest(request, true);
     return NextResponse.next();
   } catch (error) {
-    console.error("[Auth] Error decoding credentials:", error);
+    logger.error({ err: error }, "Error decoding credentials");
     logRequest(request, false);
     return new NextResponse("Invalid authentication format", {
       status: 401,

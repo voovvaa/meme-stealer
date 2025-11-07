@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { filterKeywordsRepository } from "@/lib/repositories";
 import { IdParamSchema, validate } from "@meme-stealer/shared";
 
@@ -27,7 +28,7 @@ export async function POST(
     filterKeywordsRepository.unarchive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error unarchiving keyword:", error);
+    logger.error({ err: error }, "Error unarchiving keyword:");
     return NextResponse.json(
       { error: "Failed to unarchive keyword" },
       { status: 500 }

@@ -3,6 +3,7 @@
  */
 
 import { NextRequest } from "next/server";
+import { logger } from "./logger";
 
 /**
  * Check if Basic Auth credentials are valid
@@ -93,16 +94,17 @@ export function logAuthAttempt(
   success: boolean,
   reason?: string
 ) {
-  const timestamp = new Date().toISOString();
   const method = request.method;
   const path = request.nextUrl.pathname;
   const ip = getClientIp(request);
   const userAgent = request.headers.get("user-agent") || "unknown";
 
-  const status = success ? "SUCCESS" : "FAILED";
-  const reasonStr = reason ? ` | Reason: ${reason}` : "";
-
-  console.log(
-    `[Auth] [${timestamp}] ${status} | ${method} ${path} | IP: ${ip}${reasonStr} | UA: ${userAgent.slice(0, 50)}`
-  );
+  logger.info({
+    success,
+    method,
+    path,
+    ip,
+    reason,
+    userAgent: userAgent.slice(0, 50)
+  }, "Auth attempt");
 }

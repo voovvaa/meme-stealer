@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { statsRepository } from "@/lib/repositories";
 import { GalleryPaginationSchema, validate } from "@meme-stealer/shared";
 
@@ -40,8 +41,10 @@ export async function GET(request: Request) {
       (post) => post.filePath && post.targetMessageId
     );
 
-    console.log("[Gallery API] First post filePath:", galleryPosts[0]?.filePath);
-    console.log("[Gallery API] Total gallery posts:", galleryPosts.length);
+    logger.debug({
+      firstPostFilePath: galleryPosts[0]?.filePath,
+      totalGalleryPosts: galleryPosts.length
+    }, "Gallery API request");
 
     return NextResponse.json({
       posts: galleryPosts,
@@ -50,7 +53,7 @@ export async function GET(request: Request) {
       total: totalCount,
     });
   } catch (error) {
-    console.error("Error fetching gallery:", error);
+    logger.error({ err: error }, "Error fetching gallery:");
     return NextResponse.json(
       { error: "Failed to fetch gallery" },
       { status: 500 }

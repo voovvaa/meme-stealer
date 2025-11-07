@@ -33,7 +33,6 @@ export default function SettingsPage() {
       const data = await res.json();
       setConfig(data);
     } catch (error) {
-      console.error("Failed to load config:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить конфигурацию",
@@ -85,7 +84,6 @@ export default function SettingsPage() {
         throw new Error("Failed to save config");
       }
     } catch (error) {
-      console.error("Failed to save config:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось сохранить настройки",

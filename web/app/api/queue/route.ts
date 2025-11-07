@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { statsRepository } from "@/lib/repositories";
 import { PaginationSchema, validate } from "@meme-stealer/shared";
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
       offset,
     });
   } catch (error) {
-    console.error("Error fetching queued posts:", error);
+    logger.error({ err: error }, "Error fetching queued posts:");
     return NextResponse.json(
       { error: "Failed to fetch queued posts" },
       { status: 500 }

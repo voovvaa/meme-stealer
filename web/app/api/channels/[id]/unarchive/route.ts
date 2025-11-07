@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { sourceChannelsRepository } from "@/lib/repositories";
 import { IdParamSchema, validate } from "@meme-stealer/shared";
 
@@ -27,7 +28,7 @@ export async function POST(
     sourceChannelsRepository.unarchive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error unarchiving channel:", error);
+    logger.error({ err: error }, "Error unarchiving channel:");
     return NextResponse.json(
       { error: "Failed to unarchive channel" },
       { status: 500 }

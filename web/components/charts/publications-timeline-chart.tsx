@@ -29,7 +29,6 @@ export function PublicationsTimelineChart() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error loading timeline stats:", err);
         setLoading(false);
       });
   }, []);

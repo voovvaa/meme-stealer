@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { configRepository } from "@/lib/repositories";
 import type { ConfigInput } from "@/lib/repositories";
 import { ConfigInputSchema, validate } from "@meme-stealer/shared";
@@ -16,7 +17,7 @@ export async function GET() {
     }
     return NextResponse.json(config);
   } catch (error) {
-    console.error("Error fetching config:", error);
+    logger.error({ err: error }, "Error fetching config:");
     return NextResponse.json(
       { error: "Failed to fetch config" },
       { status: 500 }
@@ -44,7 +45,7 @@ export async function PUT(request: Request) {
     const savedConfig = configRepository.getConfig();
     return NextResponse.json(savedConfig);
   } catch (error) {
-    console.error("Error saving config:", error);
+    logger.error({ err: error }, "Error saving config:");
     return NextResponse.json(
       { error: "Failed to save config" },
       { status: 500 }
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     const savedConfig = configRepository.getConfig();
     return NextResponse.json(savedConfig);
   } catch (error) {
-    console.error("Error creating config:", error);
+    logger.error({ err: error }, "Error creating config:");
     return NextResponse.json(
       { error: "Failed to create config" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { filterKeywordsRepository } from "@/lib/repositories";
 import { FilterKeywordUpdateSchema, IdParamSchema, validate } from "@meme-stealer/shared";
 
@@ -41,7 +42,7 @@ export async function PUT(
     filterKeywordsRepository.update(id, validation.data);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error updating keyword:", error);
+    logger.error({ err: error }, "Error updating keyword:");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update keyword" },
       { status: 500 }
@@ -74,7 +75,7 @@ export async function DELETE(
     filterKeywordsRepository.archive(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error archiving keyword:", error);
+    logger.error({ err: error }, "Error archiving keyword:");
     return NextResponse.json(
       { error: "Failed to archive keyword" },
       { status: 500 }

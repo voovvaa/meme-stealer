@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { filterKeywordsRepository } from "@/lib/repositories";
 import { FilterKeywordInputSchema, validate } from "@meme-stealer/shared";
 
@@ -9,7 +10,7 @@ export async function GET() {
     const keywords = filterKeywordsRepository.getAll();
     return NextResponse.json(keywords);
   } catch (error) {
-    console.error("Error fetching keywords:", error);
+    logger.error({ err: error }, "Error fetching keywords:");
     return NextResponse.json(
       { error: "Failed to fetch keywords" },
       { status: 500 }
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     filterKeywordsRepository.add(validation.data);
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    console.error("Error adding keyword:", error);
+    logger.error({ err: error }, "Error adding keyword:");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to add keyword" },
       { status: 500 }

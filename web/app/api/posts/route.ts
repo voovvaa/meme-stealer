@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { statsRepository } from "@/lib/repositories";
 import { PaginationSchema, validate } from "@meme-stealer/shared";
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
       offset,
     });
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    logger.error({ err: error }, "Error fetching posts:");
     return NextResponse.json(
       { error: "Failed to fetch posts" },
       { status: 500 }

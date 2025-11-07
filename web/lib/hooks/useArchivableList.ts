@@ -37,7 +37,6 @@ export function useArchivableList<T extends ArchivableEntity>({
       const data = await res.json();
       setItems(data);
     } catch (error) {
-      console.error(`Failed to load ${entityNamePlural}:`, error);
       toast({
         title: "Ошибка",
         description: `Не удалось загрузить список ${entityNamePlural}`,
@@ -72,7 +71,6 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to toggle");
       }
     } catch (error) {
-      console.error("Failed to toggle:", error);
       toast({
         title: "Ошибка",
         description: `Не удалось изменить статус ${entityNamePlural}`,
@@ -102,7 +100,6 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to archive");
       }
     } catch (error) {
-      console.error("Failed to archive:", error);
       toast({
         title: "Ошибка",
         description: `Не удалось архивировать ${entityName}`,
@@ -130,7 +127,6 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to unarchive");
       }
     } catch (error) {
-      console.error("Failed to unarchive:", error);
       toast({
         title: "Ошибка",
         description: `Не удалось восстановить ${entityName}`,
