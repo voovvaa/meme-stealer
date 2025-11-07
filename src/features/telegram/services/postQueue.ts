@@ -2,8 +2,8 @@ import type { TelegramClient } from "telegram";
 
 import { sendMediaFiles } from "./mediaSender.js";
 import { env } from "../../../core/config/env.js";
-import { memeRepository } from "../../../core/db/repositories.js";
 import { queueRepository } from "../../../core/db/queueRepository.js";
+import { memeRepository } from "../../../core/db/repositories.js";
 import { logger } from "../../../core/logger.js";
 import type { HashedMediaFile } from "../../../types/media.js";
 
