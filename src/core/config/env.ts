@@ -1,3 +1,4 @@
+import type { SourceChannel, FilterKeyword } from "@meme-stealer/shared";
 import dotenvFlow from "dotenv-flow";
 import { z } from "zod";
 
@@ -81,8 +82,8 @@ export const loadConfig = async (): Promise<AppConfig> => {
       phoneNumber: dbConfig.phoneNumber,
       telegramPassword: dbConfig.telegramPassword ?? undefined,
       targetChannelId: dbConfig.targetChannelId,
-      sourceChannelIds: sourceChannels.map((ch) => ch.channelId),
-      adKeywords: filterKeywords.map((kw) => kw.keyword),
+      sourceChannelIds: sourceChannels.map((ch: SourceChannel) => ch.channelId),
+      adKeywords: filterKeywords.map((kw: FilterKeyword) => kw.keyword),
       enableQueue: dbConfig.enableQueue,
       publishIntervalMin: dbConfig.publishIntervalMin,
       publishIntervalMax: dbConfig.publishIntervalMax,
