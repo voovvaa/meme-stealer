@@ -51,16 +51,10 @@ RUN apt-get update \
     build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy built shared package
-COPY packages/shared/package*.json ./packages/shared/
-WORKDIR /app/packages/shared
-RUN npm ci --omit=dev
-
-COPY packages/shared ./
-RUN npm run build
+# Copy already built shared package from deps stage
+COPY --from=deps /app/packages/shared ./packages/shared
 
 # Копируем package files бота
-WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Устанавливаем только production зависимости
