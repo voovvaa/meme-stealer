@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { filterKeywordsRepository } from "@/lib/repositories";
+import { FilterKeywordInputSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    filterKeywordsRepository.add(body);
+
+    // Validate input
+    const validation = validate(FilterKeywordInputSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    filterKeywordsRepository.add(validation.data);
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
     console.error("Error adding keyword:", error);

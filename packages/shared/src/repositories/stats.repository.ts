@@ -1,7 +1,7 @@
 import type Database from "better-sqlite3";
 
 import { PAGINATION, TIMELINE } from "../constants/index.js";
-import type { MemeStats } from "../types/index.js";
+import type { MemeStats, Post, MemeRow, QueueItem, QueueItemRow, ChannelStat, TimelineStat } from "../types/index.js";
 
 /**
  * Statistics repository
@@ -35,11 +35,7 @@ export class StatsRepository {
   /**
    * Get statistics by channel
    */
-  getChannelStats(): Array<{
-    channelId: string;
-    channelName: string | null;
-    count: number;
-  }> {
+  getChannelStats(): ChannelStat[] {
     const rows = this.db
       .prepare(`
         SELECT
@@ -52,7 +48,7 @@ export class StatsRepository {
         ORDER BY count DESC
         LIMIT 10
       `)
-      .all([]) as Array<{ channelId: string; channelName: string | null; count: number }>;
+      .all([]) as ChannelStat[];
 
     return rows;
   }
@@ -60,10 +56,7 @@ export class StatsRepository {
   /**
    * Get timeline statistics
    */
-  getTimelineStats(days: number = TIMELINE.DEFAULT_DAYS): Array<{
-    date: string;
-    count: number;
-  }> {
+  getTimelineStats(days: number = TIMELINE.DEFAULT_DAYS): TimelineStat[] {
     // Validate days
     const validDays = Math.min(Math.max(days, TIMELINE.MIN_DAYS), TIMELINE.MAX_DAYS);
 
@@ -77,7 +70,7 @@ export class StatsRepository {
         GROUP BY DATE(created_at)
         ORDER BY date ASC
       `)
-      .all(validDays) as Array<{ date: string; count: number }>;
+      .all(validDays) as TimelineStat[];
 
     return rows;
   }
@@ -128,6 +121,111 @@ export class StatsRepository {
         FROM memes
         WHERE file_path IS NOT NULL AND target_message_id IS NOT NULL
       `)
+      .get() as { count: number };
+
+    return row.count;
+  }
+
+  /**
+   * Get all posts with pagination
+   */
+  getPosts(
+    limit: number = PAGINATION.DEFAULT_POSTS_LIMIT,
+    offset: number = 0
+  ): Post[] {
+    // Validate limit
+    const validLimit = Math.min(
+      Math.max(limit, PAGINATION.MIN_LIMIT),
+      PAGINATION.MAX_LIMIT
+    );
+
+    const rows = this.db
+      .prepare(`
+        SELECT
+          id,
+          hash,
+          source_channel_id,
+          source_message_id,
+          target_message_id,
+          file_path,
+          created_at
+        FROM memes
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `)
+      .all(validLimit, offset) as MemeRow[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      hash: row.hash,
+      sourceChannelId: row.source_channel_id,
+      sourceMessageId: row.source_message_id,
+      targetMessageId: row.target_message_id,
+      filePath: row.file_path,
+      createdAt: row.created_at,
+    }));
+  }
+
+  /**
+   * Get total posts count
+   */
+  getPostsCount(): number {
+    const row = this.db
+      .prepare("SELECT COUNT(*) as count FROM memes")
+      .get() as { count: number };
+
+    return row.count;
+  }
+
+  /**
+   * Get queued posts with pagination
+   */
+  getQueuedPosts(
+    limit: number = PAGINATION.DEFAULT_POSTS_LIMIT,
+    offset: number = 0
+  ): QueueItem[] {
+    // Validate limit
+    const validLimit = Math.min(
+      Math.max(limit, PAGINATION.MIN_LIMIT),
+      PAGINATION.MAX_LIMIT
+    );
+
+    const rows = this.db
+      .prepare(`
+        SELECT
+          id,
+          source_channel_id,
+          source_message_id,
+          status,
+          scheduled_at,
+          created_at,
+          processed_at,
+          error_message
+        FROM post_queue
+        WHERE status = 'pending'
+        ORDER BY scheduled_at ASC
+        LIMIT ? OFFSET ?
+      `)
+      .all(validLimit, offset) as QueueItemRow[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      sourceChannelId: row.source_channel_id,
+      sourceMessageId: row.source_message_id,
+      status: row.status,
+      scheduledAt: row.scheduled_at,
+      createdAt: row.created_at,
+      processedAt: row.processed_at,
+      errorMessage: row.error_message,
+    }));
+  }
+
+  /**
+   * Get queued posts count
+   */
+  getQueuedPostsCount(): number {
+    const row = this.db
+      .prepare("SELECT COUNT(*) as count FROM post_queue WHERE status = 'pending'")
       .get() as { count: number };
 
     return row.count;

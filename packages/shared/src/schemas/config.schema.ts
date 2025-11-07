@@ -17,7 +17,8 @@ export const ConfigInputSchema = z.object({
     .string()
     .max(255, "Password is too long")
     .nullable()
-    .optional(),
+    .optional()
+    .transform((val) => val ?? null),
   targetChannelId: z
     .string()
     .min(1, "Target channel ID is required")

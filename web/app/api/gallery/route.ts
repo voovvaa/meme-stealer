@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { statsRepository } from "@/lib/repositories";
+import { GalleryPaginationSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,25 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
+
+    // Validate query parameters
+    const queryParams = {
+      page: searchParams.get("page"),
+      limit: searchParams.get("limit"),
+    };
+
+    const validation = validate(GalleryPaginationSchema as any, queryParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit } = validation.data as { page: number; limit: number; };
     const offset = (page - 1) * limit;
 
     const posts = statsRepository.getPosts(limit, offset);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sourceChannelsRepository } from "@/lib/repositories";
+import { SourceChannelInputSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    sourceChannelsRepository.add(body);
+
+    // Validate input
+    const validation = validate(SourceChannelInputSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    sourceChannelsRepository.add(validation.data);
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
     console.error("Error adding channel:", error);

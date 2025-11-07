@@ -27,6 +27,23 @@ export type MemeStats = {
 };
 
 /**
+ * Channel statistics type
+ */
+export type ChannelStat = {
+  channelId: string;
+  channelName: string | null;
+  count: number;
+};
+
+/**
+ * Timeline statistics type
+ */
+export type TimelineStat = {
+  date: string;
+  count: number;
+};
+
+/**
  * Raw database row type for memes
  */
 export type MemeRow = {

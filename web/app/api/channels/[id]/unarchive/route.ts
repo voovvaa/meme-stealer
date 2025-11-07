@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sourceChannelsRepository } from "@/lib/repositories";
+import { IdParamSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,20 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const id = parseInt(params.id);
+
+    // Validate ID parameter
+    const idValidation = validate(IdParamSchema as any, { id: params.id });
+    if (!idValidation.success) {
+      return NextResponse.json(
+        {
+          error: idValidation.error,
+          details: idValidation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    const id = (idValidation.data as { id: number }).id;
     sourceChannelsRepository.unarchive(id);
     return NextResponse.json({ success: true });
   } catch (error) {

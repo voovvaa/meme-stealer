@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { configRepository } from "@/lib/repositories";
+import type { ConfigInput } from "@/lib/repositories";
+import { ConfigInputSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,20 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    configRepository.saveConfig(body);
+
+    // Validate input
+    const validation = validate(ConfigInputSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    configRepository.saveConfig(validation.data as ConfigInput);
     const savedConfig = configRepository.getConfig();
     return NextResponse.json(savedConfig);
   } catch (error) {
@@ -40,7 +55,20 @@ export async function PUT(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    configRepository.saveConfig(body);
+
+    // Validate input
+    const validation = validate(ConfigInputSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    configRepository.saveConfig(validation.data as ConfigInput);
     const savedConfig = configRepository.getConfig();
     return NextResponse.json(savedConfig);
   } catch (error) {
