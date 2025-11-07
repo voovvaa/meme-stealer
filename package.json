@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/main.ts",
+    "prebuild": "cd packages/shared && npm run build",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,js}\"",
