@@ -53,8 +53,8 @@ services:
   # Веб-интерфейс
   meme-stealer-web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
 
     image: meme-stealer-web:latest
     container_name: meme-stealer-web
