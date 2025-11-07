@@ -1,4 +1,5 @@
 import { env, initConfig } from "./core/config/env.js";
+import { setupGlobalErrorHandlers } from "./core/errorHandler.js";
 import { logger } from "./core/logger.js";
 import { configWatcher } from "./core/services/configWatcher.js";
 import { createTelegramClientCleanup, registerCleanup, setupShutdownHandlers } from "./core/shutdown.js";
@@ -10,6 +11,9 @@ import { PostQueue } from "./features/telegram/services/postQueue.js";
  * Главная функция приложения
  */
 const run = async () => {
+  // Устанавливаем глобальные обработчики ошибок
+  setupGlobalErrorHandlers();
+
   // Инициализируем конфигурацию перед стартом
   await initConfig();
   logger.info("Конфигурация загружена");
