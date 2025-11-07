@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { statsRepository } from "@/lib/repositories";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
     const timelineStats = statsRepository.getTimelineStats(days);
     return NextResponse.json(timelineStats);
   } catch (error) {
-    console.error("Error fetching timeline stats:", error);
+    logger.error({ err: error }, "Error fetching timeline stats:");
     return NextResponse.json(
       { error: "Failed to fetch timeline statistics" },
       { status: 500 }

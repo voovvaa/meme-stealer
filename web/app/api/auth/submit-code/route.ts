@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -20,8 +21,7 @@ export async function POST(request: Request) {
     const sessionsDir = path.join(process.cwd(), "sessions");
     const authFilePath = path.join(sessionsDir, "auth_code.txt");
 
-    console.log(`[Auth] Saving code to: ${authFilePath}`);
-    console.log(`[Auth] Current working directory: ${process.cwd()}`);
+    logger.info({ authFilePath, cwd: process.cwd() }, "Saving auth code");
 
     // Убеждаемся что директория существует
     try {
@@ -33,11 +33,11 @@ export async function POST(request: Request) {
     // Сохраняем код
     await writeFile(authFilePath, code.trim(), "utf-8");
 
-    console.log(`[Auth] Code saved successfully: ${code.length} characters`);
+    logger.info({ codeLength: code.length }, "Auth code saved successfully");
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[Auth] Error saving auth code:", error);
+    logger.error({ err: error }, "Error saving auth code");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to save code" },
       { status: 500 }

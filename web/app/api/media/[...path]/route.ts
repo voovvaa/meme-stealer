@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
@@ -43,11 +44,11 @@ export async function GET(
     }
 
     if (!fileBuffer) {
-      console.error("[Media API] File not found, tried paths:", possiblePaths);
+      logger.error({ possiblePaths }, "Media file not found");
       throw new Error("File not found in any location");
     }
 
-    console.log("[Media API] Successfully loaded from:", successPath);
+    logger.info({ successPath }, "Media file loaded successfully");
 
     // Определяем MIME тип по расширению
     const ext = filePath.split(".").pop()?.toLowerCase();
@@ -68,7 +69,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error serving media:", error);
+    logger.error({ err: error }, "Error serving media:");
     return NextResponse.json(
       { error: "File not found" },
       { status: 404 }

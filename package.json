@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/main.ts",
+    "prebuild": "cd packages/shared && npm run build",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,js}\"",
@@ -11,6 +12,7 @@
     "format": "prettier --write \"src/**/*.{ts,js}\""
   },
   "dependencies": {
+    "@meme-stealer/shared": "file:./packages/shared",
     "better-sqlite3": "^11.7.0",
     "dotenv-flow": "^4.1.0",
     "pino": "^9.3.1",

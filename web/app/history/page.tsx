@@ -36,7 +36,6 @@ export default function HistoryPage() {
       const data = await res.json();
       setData(data);
     } catch (error) {
-      console.error("Failed to load posts:", error);
     } finally {
       setLoading(false);
     }

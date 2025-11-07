@@ -1,3 +1,4 @@
+import type { SourceChannel, FilterKeyword } from "@meme-stealer/shared";
 import dotenvFlow from "dotenv-flow";
 import { z } from "zod";
 
@@ -65,15 +66,15 @@ export const loadConfig = async (): Promise<AppConfig> => {
   const systemEnv = parseSystemEnv();
 
   // Ленивый импорт для избежания циклических зависимостей
-  const { configRepository } = await import("../db/configRepository.js");
+  const { configRepository, channelRepository, keywordRepository } = await import("../db/repositories.js");
 
   // Пробуем загрузить из БД
   const dbConfig = configRepository.getConfig();
 
   if (dbConfig) {
     // Конфигурация найдена в БД
-    const sourceChannels = configRepository.getEnabledSourceChannels();
-    const filterKeywords = configRepository.getEnabledFilterKeywords();
+    const sourceChannels = channelRepository.getEnabled();
+    const filterKeywords = keywordRepository.getEnabled();
 
     return {
       apiId: dbConfig.apiId,
@@ -81,8 +82,8 @@ export const loadConfig = async (): Promise<AppConfig> => {
       phoneNumber: dbConfig.phoneNumber,
       telegramPassword: dbConfig.telegramPassword ?? undefined,
       targetChannelId: dbConfig.targetChannelId,
-      sourceChannelIds: sourceChannels.map((ch) => ch.channelId),
-      adKeywords: filterKeywords.map((kw) => kw.keyword),
+      sourceChannelIds: sourceChannels.map((ch: SourceChannel) => ch.channelId),
+      adKeywords: filterKeywords.map((kw: FilterKeyword) => kw.keyword),
       enableQueue: dbConfig.enableQueue,
       publishIntervalMin: dbConfig.publishIntervalMin,
       publishIntervalMax: dbConfig.publishIntervalMax,

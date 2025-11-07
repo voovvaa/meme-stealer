@@ -49,7 +49,6 @@ export default function AuthPage() {
         throw new Error("Failed to submit code");
       }
     } catch (error) {
-      console.error("Failed to submit code:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось отправить код",

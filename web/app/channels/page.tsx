@@ -56,7 +56,6 @@ export default function ChannelsPage() {
         throw new Error("Failed to add channel");
       }
     } catch (error) {
-      console.error("Failed to add channel:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось добавить канал",

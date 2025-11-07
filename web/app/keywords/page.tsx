@@ -55,7 +55,6 @@ export default function KeywordsPage() {
         throw new Error("Failed to add keyword");
       }
     } catch (error) {
-      console.error("Failed to add keyword:", error);
       toast({
         title: "Ошибка",
         description: "Не удалось добавить ключевое слово",

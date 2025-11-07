@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { statsRepository } from "@/lib/repositories";
+import { GalleryPaginationSchema, validate } from "@meme-stealer/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +12,25 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
+
+    // Validate query parameters
+    const queryParams = {
+      page: searchParams.get("page"),
+      limit: searchParams.get("limit"),
+    };
+
+    const validation = validate(GalleryPaginationSchema as any, queryParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: validation.error,
+          details: validation.details
+        },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit } = validation.data as { page: number; limit: number; };
     const offset = (page - 1) * limit;
 
     const posts = statsRepository.getPosts(limit, offset);
@@ -22,8 +41,10 @@ export async function GET(request: Request) {
       (post) => post.filePath && post.targetMessageId
     );
 
-    console.log("[Gallery API] First post filePath:", galleryPosts[0]?.filePath);
-    console.log("[Gallery API] Total gallery posts:", galleryPosts.length);
+    logger.debug({
+      firstPostFilePath: galleryPosts[0]?.filePath,
+      totalGalleryPosts: galleryPosts.length
+    }, "Gallery API request");
 
     return NextResponse.json({
       posts: galleryPosts,
@@ -32,7 +53,7 @@ export async function GET(request: Request) {
       total: totalCount,
     });
   } catch (error) {
-    console.error("Error fetching gallery:", error);
+    logger.error({ err: error }, "Error fetching gallery:");
     return NextResponse.json(
       { error: "Failed to fetch gallery" },
       { status: 500 }

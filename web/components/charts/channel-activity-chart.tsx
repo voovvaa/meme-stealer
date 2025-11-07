@@ -58,7 +58,6 @@ export function ChannelActivityChart() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error loading channel stats:", err);
         setLoading(false);
       });
   }, []);

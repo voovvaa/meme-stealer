@@ -25,7 +25,6 @@ export function DatabaseStats() {
         const data = await res.json();
         setStats(data.database);
       } catch (error) {
-        console.error("Failed to load database stats:", error);
       } finally {
         setLoading(false);
       }

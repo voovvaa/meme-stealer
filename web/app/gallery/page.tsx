@@ -135,7 +135,6 @@ export default function GalleryPage() {
       setPosts(prev => pageNum === 1 ? data.posts : [...prev, ...data.posts]);
       setHasMore(data.hasMore);
     } catch (error) {
-      console.error("Error loading gallery:", error);
     } finally {
       setLoading(false);
       setInitialLoading(false);

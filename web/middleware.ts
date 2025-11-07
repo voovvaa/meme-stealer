@@ -1,5 +1,32 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logger } from "./lib/logger";
+
+/**
+ * Public endpoints that don't require Basic Auth
+ */
+const PUBLIC_ENDPOINTS = [
+  "/api/health",           // Health check for monitoring
+  "/api/auth/submit-code", // Telegram auth code submission
+];
+
+/**
+ * Log request information
+ */
+function logRequest(request: NextRequest, authenticated: boolean) {
+  const method = request.method;
+  const path = request.nextUrl.pathname;
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+
+  logger.info({
+    method,
+    path,
+    authenticated,
+    ip,
+    userAgent: userAgent.slice(0, 50)
+  }, "Request");
+}
 
 export function middleware(request: NextRequest) {
   // Пропускаем статические файлы и _next
@@ -13,6 +40,13 @@ export function middleware(request: NextRequest) {
 
   // Пропускаем /auth (страница авторизации не требует Basic Auth)
   if (request.nextUrl.pathname.startsWith("/auth")) {
+    logRequest(request, false);
+    return NextResponse.next();
+  }
+
+  // Пропускаем публичные API endpoints
+  if (PUBLIC_ENDPOINTS.some(endpoint => request.nextUrl.pathname === endpoint)) {
+    logRequest(request, false);
     return NextResponse.next();
   }
 
@@ -20,8 +54,10 @@ export function middleware(request: NextRequest) {
   const basicAuthUser = process.env.BASIC_AUTH_USER;
   const basicAuthPassword = process.env.BASIC_AUTH_PASSWORD;
 
-  // Если не настроен Basic Auth, пропускаем
+  // Если не настроен Basic Auth, пропускаем (только для dev)
   if (!basicAuthUser || !basicAuthPassword) {
+    logger.warn("Basic Auth is not configured! Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD");
+    logRequest(request, false);
     return NextResponse.next();
   }
 
@@ -29,6 +65,7 @@ export function middleware(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader) {
+    logRequest(request, false);
     return new NextResponse("Authentication required", {
       status: 401,
       headers: {
@@ -38,20 +75,37 @@ export function middleware(request: NextRequest) {
   }
 
   // Декодируем Basic Auth
-  const auth = authHeader.split(" ")[1];
-  const [user, password] = Buffer.from(auth, "base64").toString().split(":");
+  try {
+    const auth = authHeader.split(" ")[1];
+    if (!auth) {
+      throw new Error("Invalid auth header format");
+    }
 
-  // Проверяем credentials
-  if (user !== basicAuthUser || password !== basicAuthPassword) {
-    return new NextResponse("Invalid credentials", {
+    const [user, password] = Buffer.from(auth, "base64").toString().split(":");
+
+    // Проверяем credentials
+    if (user !== basicAuthUser || password !== basicAuthPassword) {
+      logRequest(request, false);
+      return new NextResponse("Invalid credentials", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Secure Area"',
+        },
+      });
+    }
+
+    logRequest(request, true);
+    return NextResponse.next();
+  } catch (error) {
+    logger.error({ err: error }, "Error decoding credentials");
+    logRequest(request, false);
+    return new NextResponse("Invalid authentication format", {
       status: 401,
       headers: {
         "WWW-Authenticate": 'Basic realm="Secure Area"',
       },
     });
   }
-
-  return NextResponse.next();
 }
 
 export const config = {

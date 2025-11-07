@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import fs from "fs";
 import path from "path";
 
@@ -19,7 +20,7 @@ export async function GET() {
       const stats = fs.statSync(dbPath);
       dbSizeMB = parseFloat((stats.size / (1024 * 1024)).toFixed(2));
     } catch (err) {
-      console.error("Failed to get DB size:", err);
+      logger.error({ err }, "Failed to get DB size");
     }
 
     // Статистика по мемам
@@ -42,7 +43,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error fetching health:", error);
+    logger.error({ err: error }, "Error fetching health");
     return NextResponse.json(
       { error: "Failed to fetch health status" },
       { status: 500 }
