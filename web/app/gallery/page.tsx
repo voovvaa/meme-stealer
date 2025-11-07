@@ -27,15 +27,6 @@ function ParallaxCard({
   const [imageError, setImageError] = useState(false);
   const rafRef = useRef<number | null>(null);
 
-  // Проверяем сразу при монтировании - может изображение уже в кеше?
-  useEffect(() => {
-    const img = imgRef.current;
-    if (img && img.complete && img.naturalHeight !== 0) {
-      // Изображение уже загружено из кеша!
-      setImageLoaded(true);
-    }
-  }, []);
-
   useEffect(() => {
     const handleScroll = () => {
       // Отменяем предыдущий запрос анимации для оптимизации
@@ -96,28 +87,22 @@ function ParallaxCard({
         className="w-full"
       >
         <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl relative">
-          <div className="relative">
-            {/* Изображение - всегда присутствует чтобы занимать место */}
-            <img
-              ref={imgRef}
-              src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
-              alt={`Мем ${post.hash}`}
-              className={`w-full h-auto select-none transform-gpu ${
-                imageLoaded ? 'opacity-100' : 'opacity-0 transition-opacity duration-1000 ease-out'
-              }`}
-              loading="lazy"
-              draggable={false}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-            />
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-muted flex items-center justify-center z-10">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
-            {/* Placeholder поверх изображения пока оно грузится */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-muted overflow-hidden">
-                <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-              </div>
-            )}
-          </div>
+          <img
+            ref={imgRef}
+            src={`/api/media/${post.filePath.replace(/^media\//, '')}`}
+            alt={`Мем ${post.hash}`}
+            className="w-full h-auto select-none transform-gpu"
+            loading="lazy"
+            draggable={false}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+          />
         </Card>
       </Tilt>
     </div>
