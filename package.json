@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,js}\""
   },
   "dependencies": {
+    "@meme-stealer/shared": "file:./packages/shared",
     "better-sqlite3": "^11.7.0",
     "dotenv-flow": "^4.1.0",
     "pino": "^9.3.1",

@@ -65,15 +65,15 @@ export const loadConfig = async (): Promise<AppConfig> => {
   const systemEnv = parseSystemEnv();
 
   // Ленивый импорт для избежания циклических зависимостей
-  const { configRepository } = await import("../db/configRepository.js");
+  const { configRepository, channelRepository, keywordRepository } = await import("../db/repositories.js");
 
   // Пробуем загрузить из БД
   const dbConfig = configRepository.getConfig();
 
   if (dbConfig) {
     // Конфигурация найдена в БД
-    const sourceChannels = configRepository.getEnabledSourceChannels();
-    const filterKeywords = configRepository.getEnabledFilterKeywords();
+    const sourceChannels = channelRepository.getEnabled();
+    const filterKeywords = keywordRepository.getEnabled();
 
     return {
       apiId: dbConfig.apiId,

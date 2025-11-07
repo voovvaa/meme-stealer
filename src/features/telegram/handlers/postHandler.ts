@@ -4,7 +4,7 @@ import { NewMessage, type NewMessageEvent } from "telegram/events/index.js";
 import { buildAdFilter } from "./adFilter.js";
 import { env } from "../../../core/config/env.js";
 import { CONTENT_PREVIEW_LENGTH } from "../../../core/constants.js";
-import { memeRepository } from "../../../core/db/memeRepository.js";
+import { memeRepository } from "../../../core/db/repositories.js";
 import { logger } from "../../../core/logger.js";
 import { createChannelMatcher } from "../helpers/channelMatcher.js";
 import { checkForDuplicates } from "../services/deduplicator.js";
@@ -141,7 +141,7 @@ const publishMedia = async (
         sourceChannelId,
         sourceMessageId: messageId,
         targetMessageId: result.targetMessageId,
-        filePath: result.filePath,
+        filePath: result.filePath ?? null,
       });
     }
 
