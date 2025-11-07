@@ -60,7 +60,7 @@ function ParallaxCard({
   return (
     <div
       ref={cardRef}
-      className="break-inside-avoid"
+      className="break-inside-avoid mb-4"
       style={{
         transform: `translate3d(0, ${parallaxOffset}px, 0)`,
         transition: 'transform 0.15s cubic-bezier(0.33, 1, 0.68, 1)',
@@ -98,7 +98,7 @@ function SkeletonCard({ index }: { index: number }) {
   const height = heights[index % heights.length];
 
   return (
-    <div className="break-inside-avoid">
+    <div className="break-inside-avoid mb-4">
       <Card className="overflow-hidden relative">
         <div
           className="w-full bg-muted relative overflow-hidden"
@@ -185,7 +185,7 @@ export default function GalleryPage() {
       </div>
 
       {initialLoading ? (
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
           {Array.from({ length: 12 }).map((_, index) => (
             <SkeletonCard key={index} index={index} />
           ))}
@@ -197,7 +197,7 @@ export default function GalleryPage() {
           </p>
         </div>
       ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
           {posts.map((post, index) => (
             <ParallaxCard
               key={post.id}
