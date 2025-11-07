@@ -60,9 +60,8 @@ function ParallaxCard({
   return (
     <div
       ref={cardRef}
-      className="break-inside-avoid animate-fadeIn"
+      className="break-inside-avoid"
       style={{
-        animationDelay: `${(index % 20) * 40}ms`,
         transform: `translate3d(0, ${parallaxOffset}px, 0)`,
         transition: 'transform 0.15s cubic-bezier(0.33, 1, 0.68, 1)',
         willChange: 'transform'
@@ -99,12 +98,7 @@ function SkeletonCard({ index }: { index: number }) {
   const height = heights[index % heights.length];
 
   return (
-    <div
-      className="break-inside-avoid animate-fadeIn"
-      style={{
-        animationDelay: `${(index % 20) * 40}ms`
-      }}
-    >
+    <div className="break-inside-avoid">
       <Card className="overflow-hidden relative">
         <div
           className="w-full bg-muted relative overflow-hidden"
