@@ -26,4 +26,5 @@ find /app/sessions -type f -exec chmod 664 {} \;
 
 # Запускаем приложение от пользователя nextjs
 echo "${GREEN}[Web Entrypoint] Starting Next.js server as nextjs user...${NC}"
-exec gosu nextjs node server.js
+cd /app/web
+exec gosu nextjs npx next start

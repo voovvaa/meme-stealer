@@ -48,16 +48,16 @@ RUN apk add --no-cache gosu
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs --ingroup nodejs
 
-# Copy necessary files
-COPY --from=builder /app/web/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
-
 # Copy shared package with compiled code and dependencies
 COPY --from=builder --chown=nextjs:nodejs /app/packages/shared ./packages/shared
 
-# Copy better-sqlite3 native bindings to web/node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/web/node_modules/better-sqlite3 ./web/node_modules/better-sqlite3
+# Copy web application files
+WORKDIR /app/web
+COPY --from=builder --chown=nextjs:nodejs /app/web/package*.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/web/next.config.ts ./
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/web/node_modules ./node_modules
 
 # Copy entrypoint
 COPY web/docker-entrypoint.sh /docker-entrypoint.sh
