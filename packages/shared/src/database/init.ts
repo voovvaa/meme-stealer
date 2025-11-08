@@ -68,15 +68,12 @@ export const initializeDatabase = (
         channel_id TEXT NOT NULL UNIQUE,
         channel_name TEXT,
         enabled INTEGER NOT NULL DEFAULT 1,
-        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
 
       CREATE INDEX IF NOT EXISTS idx_source_channels_enabled
         ON source_channels(enabled);
-      CREATE INDEX IF NOT EXISTS idx_source_channels_archived
-        ON source_channels(archived);
     `);
 
     // Add archived column to existing source_channels if missing
@@ -87,21 +84,24 @@ export const initializeDatabase = (
       // Column already exists
     }
 
+    // Create index on archived column (after ensuring column exists)
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_source_channels_archived
+        ON source_channels(archived);
+    `);
+
     // ==================== FILTER KEYWORDS ====================
     db.exec(`
       CREATE TABLE IF NOT EXISTS filter_keywords (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         keyword TEXT NOT NULL UNIQUE,
         enabled INTEGER NOT NULL DEFAULT 1,
-        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
 
       CREATE INDEX IF NOT EXISTS idx_filter_keywords_enabled
         ON filter_keywords(enabled);
-      CREATE INDEX IF NOT EXISTS idx_filter_keywords_archived
-        ON filter_keywords(archived);
     `);
 
     // Add archived column to existing filter_keywords if missing
@@ -111,6 +111,12 @@ export const initializeDatabase = (
     } catch {
       // Column already exists
     }
+
+    // Create index on archived column (after ensuring column exists)
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_filter_keywords_archived
+        ON filter_keywords(archived);
+    `);
 
     // ==================== MEMES (HISTORY) ====================
     db.exec(`
