@@ -56,6 +56,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
 # Copy shared package with compiled code and dependencies
 COPY --from=builder --chown=nextjs:nodejs /app/packages/shared ./packages/shared
 
+# Copy better-sqlite3 native bindings to web/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/web/node_modules/better-sqlite3 ./web/node_modules/better-sqlite3
+
 # Copy entrypoint
 COPY web/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
