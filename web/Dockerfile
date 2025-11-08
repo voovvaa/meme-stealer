@@ -53,8 +53,8 @@ COPY --from=builder /app/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
 
-# Copy better-sqlite3 native module to correct location in standalone output
-COPY --from=builder --chown=nextjs:nodejs /app/web/node_modules/better-sqlite3 ./web/node_modules/better-sqlite3
+# Copy shared package with compiled code and dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/packages/shared ./packages/shared
 
 # Copy entrypoint
 COPY web/docker-entrypoint.sh /docker-entrypoint.sh
