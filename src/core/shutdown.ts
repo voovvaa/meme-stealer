@@ -1,5 +1,6 @@
 import type { TelegramClient } from "telegram";
 
+import { TIMEOUTS } from "./constants.js";
 import { closeDatabase } from "./db/database.js";
 import { logger } from "./logger.js";
 
@@ -14,7 +15,7 @@ type CleanupFunction = () => Promise<void> | void;
 class ShutdownManager {
   private cleanupFunctions: CleanupFunction[] = [];
   private isShuttingDown = false;
-  private shutdownTimeout = 10000; // 10 секунд на завершение
+  private shutdownTimeout = TIMEOUTS.SHUTDOWN;
 
   /**
    * Регистрирует функцию очистки ресурсов

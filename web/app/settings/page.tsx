@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { clientLogger } from "@/lib/client-logger";
 
 type Config = {
   id: 1;
@@ -33,7 +34,7 @@ export default function SettingsPage() {
       const data = await res.json();
       setConfig(data);
     } catch (error) {
-      console.error("Failed to load config:", error);
+      clientLogger.error({ component: "SettingsPage", action: "loadConfig" }, error);
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить конфигурацию",
@@ -85,7 +86,7 @@ export default function SettingsPage() {
         throw new Error("Failed to save config");
       }
     } catch (error) {
-      console.error("Failed to save config:", error);
+      clientLogger.error({ component: "SettingsPage", action: "saveConfig" }, error);
       toast({
         title: "Ошибка",
         description: "Не удалось сохранить настройки",
@@ -121,9 +122,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Настройки бота</CardTitle>
-            <CardDescription>
-              Конфигурация Telegram бота и параметров публикации
-            </CardDescription>
+            <CardDescription>Конфигурация Telegram бота и параметров публикации</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Telegram API Settings */}
@@ -138,7 +137,9 @@ export default function SettingsPage() {
                 <Input
                   type="number"
                   value={currentConfig.apiId}
-                  onChange={(e) => setConfig({ ...currentConfig, apiId: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setConfig({ ...currentConfig, apiId: parseInt(e.target.value) || 0 })
+                  }
                   required
                 />
               </div>
@@ -169,7 +170,9 @@ export default function SettingsPage() {
                 <Input
                   type="password"
                   value={currentConfig.telegramPassword || ""}
-                  onChange={(e) => setConfig({ ...currentConfig, telegramPassword: e.target.value || null })}
+                  onChange={(e) =>
+                    setConfig({ ...currentConfig, telegramPassword: e.target.value || null })
+                  }
                   placeholder="Если включена двухфакторная аутентификация"
                 />
               </div>
@@ -219,7 +222,12 @@ export default function SettingsPage() {
                 <Input
                   type="number"
                   value={currentConfig.publishIntervalMin}
-                  onChange={(e) => setConfig({ ...currentConfig, publishIntervalMin: parseInt(e.target.value) || 60 })}
+                  onChange={(e) =>
+                    setConfig({
+                      ...currentConfig,
+                      publishIntervalMin: parseInt(e.target.value) || 60,
+                    })
+                  }
                   min="10"
                   required
                 />
@@ -230,7 +238,12 @@ export default function SettingsPage() {
                 <Input
                   type="number"
                   value={currentConfig.publishIntervalMax}
-                  onChange={(e) => setConfig({ ...currentConfig, publishIntervalMax: parseInt(e.target.value) || 300 })}
+                  onChange={(e) =>
+                    setConfig({
+                      ...currentConfig,
+                      publishIntervalMax: parseInt(e.target.value) || 300,
+                    })
+                  }
                   min="10"
                   required
                 />

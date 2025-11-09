@@ -38,12 +38,47 @@ export function middleware(request: NextRequest) {
   }
 
   // Декодируем Basic Auth
-  const auth = authHeader.split(" ")[1];
-  const [user, password] = Buffer.from(auth, "base64").toString().split(":");
+  try {
+    const parts = authHeader.split(" ");
 
-  // Проверяем credentials
-  if (user !== basicAuthUser || password !== basicAuthPassword) {
-    return new NextResponse("Invalid credentials", {
+    // Проверяем формат "Basic <credentials>"
+    if (parts.length !== 2 || parts[0] !== "Basic") {
+      return new NextResponse("Invalid authorization format", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Secure Area"',
+        },
+      });
+    }
+
+    const auth = parts[1];
+    const decoded = Buffer.from(auth, "base64").toString();
+    const credentials = decoded.split(":");
+
+    // Проверяем что есть username и password
+    if (credentials.length !== 2) {
+      return new NextResponse("Invalid credentials format", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Secure Area"',
+        },
+      });
+    }
+
+    const [user, password] = credentials;
+
+    // Проверяем credentials
+    if (user !== basicAuthUser || password !== basicAuthPassword) {
+      return new NextResponse("Invalid credentials", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Secure Area"',
+        },
+      });
+    }
+  } catch (error) {
+    // Ошибка декодирования base64 или другая ошибка
+    return new NextResponse("Invalid authorization header", {
       status: 401,
       headers: {
         "WWW-Authenticate": 'Basic realm="Secure Area"',

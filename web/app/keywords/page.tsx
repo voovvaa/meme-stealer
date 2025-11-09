@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useArchivableList } from "@/lib/hooks/useArchivableList";
 import { ArchivableTable } from "@/components/archivable-table";
 import type { FilterKeyword } from "@/lib/types";
+import { clientLogger } from "@/lib/client-logger";
 
 export default function KeywordsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -55,7 +56,7 @@ export default function KeywordsPage() {
         throw new Error("Failed to add keyword");
       }
     } catch (error) {
-      console.error("Failed to add keyword:", error);
+      clientLogger.error({ component: "KeywordsPage", action: "addKeyword" }, error);
       toast({
         title: "Ошибка",
         description: "Не удалось добавить ключевое слово",
@@ -75,9 +76,7 @@ export default function KeywordsPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Фильтры ключевых слов</CardTitle>
-              <CardDescription>
-                Управление ключевыми словами для фильтрации рекламы
-              </CardDescription>
+              <CardDescription>Управление ключевыми словами для фильтрации рекламы</CardDescription>
             </div>
             <Button onClick={() => setShowAddForm(!showAddForm)}>
               {showAddForm ? "Отмена" : "Добавить слово"}
@@ -113,9 +112,7 @@ export default function KeywordsPage() {
             columns={[
               {
                 header: "Ключевое слово",
-                render: (keyword) => (
-                  <span className="font-medium">{keyword.keyword}</span>
-                ),
+                render: (keyword) => <span className="font-medium">{keyword.keyword}</span>,
               },
               {
                 header: "Добавлено",

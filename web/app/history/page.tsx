@@ -3,8 +3,17 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { clientLogger } from "@/lib/client-logger";
+import { PAGINATION } from "@/lib/constants";
 
 type Post = {
   id: number;
@@ -26,7 +35,7 @@ export default function HistoryPage() {
   const [data, setData] = useState<PostsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const limit = 50;
+  const limit = PAGINATION.DEFAULT_LIMIT;
 
   const loadPosts = async (pageNum: number) => {
     setLoading(true);
@@ -36,7 +45,7 @@ export default function HistoryPage() {
       const data = await res.json();
       setData(data);
     } catch (error) {
-      console.error("Failed to load posts:", error);
+      clientLogger.error({ component: "HistoryPage", action: "loadPosts" }, error);
     } finally {
       setLoading(false);
     }
@@ -58,15 +67,11 @@ export default function HistoryPage() {
       <Card>
         <CardHeader>
           <CardTitle>История постов</CardTitle>
-          <CardDescription>
-            Всего обработано постов: {data?.total || 0}
-          </CardDescription>
+          <CardDescription>Всего обработано постов: {data?.total || 0}</CardDescription>
         </CardHeader>
         <CardContent>
           {posts.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Нет обработанных постов
-            </p>
+            <p className="text-muted-foreground text-center py-8">Нет обработанных постов</p>
           ) : (
             <>
               <Table>
@@ -82,15 +87,9 @@ export default function HistoryPage() {
                 <TableBody>
                   {posts.map((post) => (
                     <TableRow key={post.id}>
-                      <TableCell className="font-mono text-sm">
-                        {post.id}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {post.sourceChannelId}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {post.sourceMessageId}
-                      </TableCell>
+                      <TableCell className="font-mono text-sm">{post.id}</TableCell>
+                      <TableCell className="font-mono text-sm">{post.sourceChannelId}</TableCell>
+                      <TableCell className="font-mono text-sm">{post.sourceMessageId}</TableCell>
                       <TableCell>
                         {post.targetMessageId ? (
                           <Badge variant="default">Опубликован #{post.targetMessageId}</Badge>

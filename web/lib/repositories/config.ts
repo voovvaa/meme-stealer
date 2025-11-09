@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import type { Config, ConfigInput } from "@bot-types/database";
 import type { ConfigRow } from "./types";
+import { setNeedsReload, getCurrentTimestamp } from "./helpers";
 
 const rowToConfig = (row: ConfigRow): Config => ({
   id: 1,
@@ -26,7 +27,7 @@ export const configRepository = {
 
   saveConfig(config: ConfigInput): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     const existingConfig = this.getConfig();
 
     if (existingConfig) {
@@ -77,6 +78,6 @@ export const configRepository = {
       );
     }
 
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 };

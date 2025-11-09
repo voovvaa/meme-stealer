@@ -1,8 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, TooltipProps } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  TooltipProps,
+} from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { clientLogger } from "@/lib/client-logger";
 
 type ChannelStat = {
   channelId: string;
@@ -58,7 +69,7 @@ export function ChannelActivityChart() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error loading channel stats:", err);
+        clientLogger.error({ component: "ChannelActivityChart", action: "loadStats" }, err);
         setLoading(false);
       });
   }, []);
@@ -106,10 +117,7 @@ export function ChannelActivityChart() {
               className="text-xs"
               tick={{ fill: "hsl(var(--muted-foreground))" }}
             />
-            <YAxis
-              className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-            />
+            <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" radius={[8, 8, 0, 0]}>
               {data.map((_, index) => (

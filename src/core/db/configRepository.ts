@@ -8,6 +8,9 @@ import type {
   FilterKeywordInput,
 } from "../../types/database.js";
 import { logger } from "../logger.js";
+import { filterKeywordsRepository } from "./filterKeywordsRepository.js";
+import { setNeedsReload, getCurrentTimestamp } from "./helpers.js";
+import { sourceChannelsRepository } from "./sourceChannelsRepository.js";
 
 // Re-export типов для обратной совместимости
 export type {
@@ -45,58 +48,8 @@ const insertConfigStmt = db.prepare(`
   ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
 `);
 
-const setNeedsReloadStmt = db.prepare(`
-  UPDATE config SET needs_reload = 1 WHERE id = 1
-`);
-
 const clearNeedsReloadStmt = db.prepare(`
   UPDATE config SET needs_reload = 0 WHERE id = 1
-`);
-
-// Prepared statements для source_channels
-const getAllSourceChannelsStmt = db.prepare(`
-  SELECT * FROM source_channels ORDER BY created_at DESC
-`);
-
-const getEnabledSourceChannelsStmt = db.prepare(`
-  SELECT * FROM source_channels WHERE enabled = 1 ORDER BY created_at DESC
-`);
-
-const insertSourceChannelStmt = db.prepare(`
-  INSERT INTO source_channels (channel_id, channel_name, enabled, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?)
-`);
-
-const updateSourceChannelStmt = db.prepare(`
-  UPDATE source_channels SET channel_name = ?, enabled = ?, updated_at = ?
-  WHERE id = ?
-`);
-
-const deleteSourceChannelStmt = db.prepare(`
-  DELETE FROM source_channels WHERE id = ?
-`);
-
-// Prepared statements для filter_keywords
-const getAllFilterKeywordsStmt = db.prepare(`
-  SELECT * FROM filter_keywords ORDER BY created_at DESC
-`);
-
-const getEnabledFilterKeywordsStmt = db.prepare(`
-  SELECT * FROM filter_keywords WHERE enabled = 1 ORDER BY created_at DESC
-`);
-
-const insertFilterKeywordStmt = db.prepare(`
-  INSERT INTO filter_keywords (keyword, enabled, created_at, updated_at)
-  VALUES (?, ?, ?, ?)
-`);
-
-const updateFilterKeywordStmt = db.prepare(`
-  UPDATE filter_keywords SET keyword = ?, enabled = ?, updated_at = ?
-  WHERE id = ?
-`);
-
-const deleteFilterKeywordStmt = db.prepare(`
-  DELETE FROM filter_keywords WHERE id = ?
 `);
 
 // Helper функции для преобразования данных
@@ -126,44 +79,6 @@ const rowToConfig = (row: {
   updatedAt: row.updated_at,
 });
 
-type SourceChannelRow = {
-  id: number;
-  channel_id: string;
-  channel_name: string | null;
-  enabled: number;
-  archived: number;
-  created_at: string;
-  updated_at: string;
-};
-
-type FilterKeywordRow = {
-  id: number;
-  keyword: string;
-  enabled: number;
-  archived: number;
-  created_at: string;
-  updated_at: string;
-};
-
-const rowToSourceChannel = (row: SourceChannelRow): SourceChannel => ({
-  id: row.id,
-  channelId: row.channel_id,
-  channelName: row.channel_name,
-  enabled: Boolean(row.enabled),
-  archived: Boolean(row.archived),
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
-
-const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
-  id: row.id,
-  keyword: row.keyword,
-  enabled: Boolean(row.enabled),
-  archived: Boolean(row.archived),
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
-
 export const configRepository = {
   // Config operations
   getConfig(): Config | null {
@@ -187,7 +102,7 @@ export const configRepository = {
   },
 
   saveConfig(config: ConfigInput): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     const existingConfig = this.getConfig();
 
     if (existingConfig) {
@@ -216,119 +131,33 @@ export const configRepository = {
       );
     }
 
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info("Конфигурация обновлена, установлен флаг needs_reload");
   },
 
   setNeedsReload(): void {
-    setNeedsReloadStmt.run();
+    setNeedsReload();
   },
 
   clearNeedsReload(): void {
     clearNeedsReloadStmt.run();
   },
 
-  // Source channels operations
-  getAllSourceChannels(): SourceChannel[] {
-    const rows = getAllSourceChannelsStmt.all() as SourceChannelRow[];
-    return rows.map((row) => rowToSourceChannel(row));
-  },
+  // Re-export source channels operations for backwards compatibility
+  getAllSourceChannels:
+    sourceChannelsRepository.getAllSourceChannels.bind(sourceChannelsRepository),
+  getEnabledSourceChannels:
+    sourceChannelsRepository.getEnabledSourceChannels.bind(sourceChannelsRepository),
+  addSourceChannel: sourceChannelsRepository.addSourceChannel.bind(sourceChannelsRepository),
+  updateSourceChannel: sourceChannelsRepository.updateSourceChannel.bind(sourceChannelsRepository),
+  deleteSourceChannel: sourceChannelsRepository.deleteSourceChannel.bind(sourceChannelsRepository),
 
-  getEnabledSourceChannels(): SourceChannel[] {
-    const rows = getEnabledSourceChannelsStmt.all() as SourceChannelRow[];
-    return rows.map((row) => rowToSourceChannel(row));
-  },
-
-  addSourceChannel(input: SourceChannelInput): void {
-    const now = new Date().toISOString();
-    try {
-      insertSourceChannelStmt.run(
-        input.channelId,
-        input.channelName ?? null,
-        input.enabled !== false ? 1 : 0,
-        now,
-        now,
-      );
-      setNeedsReloadStmt.run();
-      logger.info({ channelId: input.channelId }, "Добавлен канал-источник");
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
-        logger.warn({ channelId: input.channelId }, "Канал уже существует");
-        throw new Error("Канал с таким ID уже существует");
-      }
-      throw error;
-    }
-  },
-
-  updateSourceChannel(id: number, input: Partial<SourceChannelInput>): void {
-    const now = new Date().toISOString();
-    const channel = this.getAllSourceChannels().find((c) => c.id === id);
-    if (!channel) {
-      throw new Error("Канал не найден");
-    }
-
-    updateSourceChannelStmt.run(
-      input.channelName !== undefined ? input.channelName : channel.channelName,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : channel.enabled ? 1 : 0,
-      now,
-      id,
-    );
-    setNeedsReloadStmt.run();
-    logger.info({ id, channelId: channel.channelId }, "Канал-источник обновлен");
-  },
-
-  deleteSourceChannel(id: number): void {
-    deleteSourceChannelStmt.run(id);
-    setNeedsReloadStmt.run();
-    logger.info({ id }, "Канал-источник удален");
-  },
-
-  // Filter keywords operations
-  getAllFilterKeywords(): FilterKeyword[] {
-    const rows = getAllFilterKeywordsStmt.all() as FilterKeywordRow[];
-    return rows.map((row) => rowToFilterKeyword(row));
-  },
-
-  getEnabledFilterKeywords(): FilterKeyword[] {
-    const rows = getEnabledFilterKeywordsStmt.all() as FilterKeywordRow[];
-    return rows.map((row) => rowToFilterKeyword(row));
-  },
-
-  addFilterKeyword(input: FilterKeywordInput): void {
-    const now = new Date().toISOString();
-    try {
-      insertFilterKeywordStmt.run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
-      setNeedsReloadStmt.run();
-      logger.info({ keyword: input.keyword }, "Добавлено ключевое слово");
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
-        logger.warn({ keyword: input.keyword }, "Ключевое слово уже существует");
-        throw new Error("Ключевое слово уже существует");
-      }
-      throw error;
-    }
-  },
-
-  updateFilterKeyword(id: number, input: Partial<FilterKeywordInput>): void {
-    const now = new Date().toISOString();
-    const keyword = this.getAllFilterKeywords().find((k) => k.id === id);
-    if (!keyword) {
-      throw new Error("Ключевое слово не найдено");
-    }
-
-    updateFilterKeywordStmt.run(
-      input.keyword !== undefined ? input.keyword : keyword.keyword,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
-      now,
-      id,
-    );
-    setNeedsReloadStmt.run();
-    logger.info({ id, keyword: keyword.keyword }, "Ключевое слово обновлено");
-  },
-
-  deleteFilterKeyword(id: number): void {
-    deleteFilterKeywordStmt.run(id);
-    setNeedsReloadStmt.run();
-    logger.info({ id }, "Ключевое слово удалено");
-  },
+  // Re-export filter keywords operations for backwards compatibility
+  getAllFilterKeywords:
+    filterKeywordsRepository.getAllFilterKeywords.bind(filterKeywordsRepository),
+  getEnabledFilterKeywords:
+    filterKeywordsRepository.getEnabledFilterKeywords.bind(filterKeywordsRepository),
+  addFilterKeyword: filterKeywordsRepository.addFilterKeyword.bind(filterKeywordsRepository),
+  updateFilterKeyword: filterKeywordsRepository.updateFilterKeyword.bind(filterKeywordsRepository),
+  deleteFilterKeyword: filterKeywordsRepository.deleteFilterKeyword.bind(filterKeywordsRepository),
 };

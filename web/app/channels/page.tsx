@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useArchivableList } from "@/lib/hooks/useArchivableList";
 import { ArchivableTable } from "@/components/archivable-table";
 import type { SourceChannel } from "@/lib/types";
+import { clientLogger } from "@/lib/client-logger";
 
 export default function ChannelsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -56,7 +57,7 @@ export default function ChannelsPage() {
         throw new Error("Failed to add channel");
       }
     } catch (error) {
-      console.error("Failed to add channel:", error);
+      clientLogger.error({ component: "ChannelsPage", action: "addChannel" }, error);
       toast({
         title: "Ошибка",
         description: "Не удалось добавить канал",
@@ -76,9 +77,7 @@ export default function ChannelsPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Каналы-источники</CardTitle>
-              <CardDescription>
-                Управление каналами, из которых копируются мемы
-              </CardDescription>
+              <CardDescription>Управление каналами, из которых копируются мемы</CardDescription>
             </div>
             <Button onClick={() => setShowAddForm(!showAddForm)}>
               {showAddForm ? "Отмена" : "Добавить канал"}
@@ -122,9 +121,7 @@ export default function ChannelsPage() {
             columns={[
               {
                 header: "ID / Username",
-                render: (channel) => (
-                  <span className="font-mono text-sm">{channel.channelId}</span>
-                ),
+                render: (channel) => <span className="font-mono text-sm">{channel.channelId}</span>,
               },
               {
                 header: "Название",

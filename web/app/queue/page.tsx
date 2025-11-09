@@ -3,8 +3,17 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { clientLogger } from "@/lib/client-logger";
+import { PAGINATION } from "@/lib/constants";
 
 type QueueItem = {
   id: number;
@@ -28,7 +37,7 @@ export default function QueuePage() {
   const [data, setData] = useState<QueueResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const limit = 50;
+  const limit = PAGINATION.DEFAULT_LIMIT;
 
   const loadQueuedPosts = async (pageNum: number) => {
     setLoading(true);
@@ -38,7 +47,7 @@ export default function QueuePage() {
       const data = await res.json();
       setData(data);
     } catch (error) {
-      console.error("Failed to load queued posts:", error);
+      clientLogger.error({ component: "QueuePage", action: "loadQueuedPosts" }, error);
     } finally {
       setLoading(false);
     }
@@ -88,15 +97,11 @@ export default function QueuePage() {
       <Card>
         <CardHeader>
           <CardTitle>Отложенные записи</CardTitle>
-          <CardDescription>
-            Всего в очереди: {data?.total || 0}
-          </CardDescription>
+          <CardDescription>Всего в очереди: {data?.total || 0}</CardDescription>
         </CardHeader>
         <CardContent>
           {queuedPosts.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Нет отложенных записей
-            </p>
+            <p className="text-muted-foreground text-center py-8">Нет отложенных записей</p>
           ) : (
             <>
               <Table>
@@ -113,15 +118,9 @@ export default function QueuePage() {
                 <TableBody>
                   {queuedPosts.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-mono text-sm">
-                        {item.id}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {item.sourceChannelId}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {item.sourceMessageId}
-                      </TableCell>
+                      <TableCell className="font-mono text-sm">{item.id}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.sourceChannelId}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.sourceMessageId}</TableCell>
                       <TableCell className="text-sm">
                         <div className="flex flex-col gap-1">
                           <span className="text-muted-foreground">

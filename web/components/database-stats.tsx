@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive, Calendar, TrendingUp } from "lucide-react";
+import { clientLogger } from "@/lib/client-logger";
+import { REFRESH_INTERVALS } from "@/lib/constants";
 
 type DatabaseStats = {
   status: string;
@@ -25,15 +27,14 @@ export function DatabaseStats() {
         const data = await res.json();
         setStats(data.database);
       } catch (error) {
-        console.error("Failed to load database stats:", error);
+        clientLogger.error({ component: "DatabaseStats", action: "loadStats" }, error);
       } finally {
         setLoading(false);
       }
     };
 
     loadStats();
-    // Обновляем каждые 30 секунд
-    const interval = setInterval(loadStats, 30000);
+    const interval = setInterval(loadStats, REFRESH_INTERVALS.DATABASE_STATS);
     return () => clearInterval(interval);
   }, []);
 
@@ -54,9 +55,7 @@ export function DatabaseStats() {
     <Card>
       <CardHeader>
         <CardTitle>Статистика базы данных</CardTitle>
-        <CardDescription>
-          Информация о хранилище мемов
-        </CardDescription>
+        <CardDescription>Информация о хранилище мемов</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-3">
@@ -82,7 +81,8 @@ export function DatabaseStats() {
               <p className="text-2xl font-bold">
                 {stats.totalMemes > 0
                   ? ((stats.publishedMemes / stats.totalMemes) * 100).toFixed(1)
-                  : "0.0"}%
+                  : "0.0"}
+                %
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {stats.publishedMemes} из {stats.totalMemes}
@@ -102,15 +102,23 @@ export function DatabaseStats() {
           </div>
         </div>
 
-        <div className={`mt-4 p-3 rounded-lg flex items-center space-x-2 ${
-          stats.status === "healthy" ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            stats.status === "healthy" ? "bg-green-500" : "bg-red-500"
-          }`} />
-          <span className={`text-sm font-medium ${
-            stats.status === "healthy" ? "text-green-800" : "text-red-800"
-          }`}>
+        <div
+          className={`mt-4 p-3 rounded-lg flex items-center space-x-2 ${
+            stats.status === "healthy"
+              ? "bg-green-50 border border-green-200"
+              : "bg-red-50 border border-red-200"
+          }`}
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${
+              stats.status === "healthy" ? "bg-green-500" : "bg-red-500"
+            }`}
+          />
+          <span
+            className={`text-sm font-medium ${
+              stats.status === "healthy" ? "text-green-800" : "text-red-800"
+            }`}
+          >
             База данных {stats.status === "healthy" ? "работает нормально" : "недоступна"}
           </span>
         </div>

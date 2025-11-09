@@ -8,6 +8,7 @@ import { ChannelActivityChart } from "@/components/charts/channel-activity-chart
 import { PublicationsTimelineChart } from "@/components/charts/publications-timeline-chart";
 import { BotStatus } from "@/components/bot-status";
 import { DatabaseStats } from "@/components/database-stats";
+import { clientLogger } from "@/lib/client-logger";
 
 type Stats = {
   total: number;
@@ -27,7 +28,7 @@ export default function Dashboard() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching stats:", err);
+        clientLogger.error({ component: "Dashboard", action: "fetchStats" }, err);
         setLoading(false);
       });
   }, []);
@@ -41,9 +42,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Обзор статистики работы бота
-          </p>
+          <p className="text-muted-foreground">Обзор статистики работы бота</p>
         </div>
         <BotStatus />
       </div>
@@ -51,46 +50,34 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Всего постов
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Всего постов</CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Обработано с начала работы
-            </p>
+            <p className="text-xs text-muted-foreground">Обработано с начала работы</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Опубликовано
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Опубликовано</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalPublished || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Отправлено в целевой канал
-            </p>
+            <p className="text-xs text-muted-foreground">Отправлено в целевой канал</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              В очереди
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">В очереди</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pending || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Ожидают публикации
-            </p>
+            <p className="text-xs text-muted-foreground">Ожидают публикации</p>
           </CardContent>
         </Card>
       </div>
@@ -107,9 +94,7 @@ export default function Dashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Быстрые действия</CardTitle>
-          <CardDescription>
-            Управление конфигурацией бота
-          </CardDescription>
+          <CardDescription>Управление конфигурацией бота</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -117,9 +102,7 @@ export default function Dashboard() {
               <Card className="cursor-pointer hover:bg-accent transition-colors">
                 <CardHeader>
                   <CardTitle className="text-base">Управление каналами</CardTitle>
-                  <CardDescription>
-                    Добавление и настройка отслеживаемых каналов
-                  </CardDescription>
+                  <CardDescription>Добавление и настройка отслеживаемых каналов</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
@@ -128,9 +111,7 @@ export default function Dashboard() {
               <Card className="cursor-pointer hover:bg-accent transition-colors">
                 <CardHeader>
                   <CardTitle className="text-base">Фильтры</CardTitle>
-                  <CardDescription>
-                    Настройка ключевых слов для фильтрации
-                  </CardDescription>
+                  <CardDescription>Настройка ключевых слов для фильтрации</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
@@ -139,9 +120,7 @@ export default function Dashboard() {
               <Card className="cursor-pointer hover:bg-accent transition-colors">
                 <CardHeader>
                   <CardTitle className="text-base">Настройки времени</CardTitle>
-                  <CardDescription>
-                    Интервалы публикации постов
-                  </CardDescription>
+                  <CardDescription>Интервалы публикации постов</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
@@ -150,9 +129,7 @@ export default function Dashboard() {
               <Card className="cursor-pointer hover:bg-accent transition-colors">
                 <CardHeader>
                   <CardTitle className="text-base">История</CardTitle>
-                  <CardDescription>
-                    Просмотр опубликованных постов
-                  </CardDescription>
+                  <CardDescription>Просмотр опубликованных постов</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
