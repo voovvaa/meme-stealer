@@ -1,31 +1,20 @@
 import { NextResponse } from "next/server";
 import { filterKeywordsRepository } from "@/lib/repositories";
+import { withErrorHandling } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  try {
+  return withErrorHandling(async () => {
     const keywords = filterKeywordsRepository.getAll();
     return NextResponse.json(keywords);
-  } catch (error) {
-    console.error("Error fetching keywords:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch keywords" },
-      { status: 500 }
-    );
-  }
+  }, "Failed to fetch keywords");
 }
 
 export async function POST(request: Request) {
-  try {
+  return withErrorHandling(async () => {
     const body = await request.json();
     filterKeywordsRepository.add(body);
     return NextResponse.json({ success: true }, { status: 201 });
-  } catch (error) {
-    console.error("Error adding keyword:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to add keyword" },
-      { status: 500 }
-    );
-  }
+  }, "Failed to add keyword");
 }

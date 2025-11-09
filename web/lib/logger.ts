@@ -1,0 +1,27 @@
+/**
+ * Structured logger for web API routes
+ * Uses pino for consistent logging across bot and web
+ */
+
+import pino from "pino";
+
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+export const logger = pino({
+  level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
+  transport: isDevelopment
+    ? {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          translateTime: "HH:MM:ss",
+          ignore: "pid,hostname",
+        },
+      }
+    : undefined,
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    },
+  },
+});

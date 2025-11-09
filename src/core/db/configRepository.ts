@@ -1,52 +1,25 @@
 import { getDatabase } from "./database.js";
+import type {
+  Config,
+  ConfigInput,
+  SourceChannel,
+  SourceChannelInput,
+  FilterKeyword,
+  FilterKeywordInput,
+} from "../../types/database.js";
 import { logger } from "../logger.js";
 
+// Re-export типов для обратной совместимости
+export type {
+  Config,
+  ConfigInput,
+  SourceChannel,
+  SourceChannelInput,
+  FilterKeyword,
+  FilterKeywordInput,
+};
+
 const db = getDatabase();
-
-// Типы
-export type Config = {
-  id: 1;
-  apiId: number;
-  apiHash: string;
-  phoneNumber: string;
-  telegramPassword: string | null;
-  targetChannelId: string;
-  enableQueue: boolean;
-  publishIntervalMin: number;
-  publishIntervalMax: number;
-  needsReload: boolean;
-  updatedAt: string;
-};
-
-export type ConfigInput = Omit<Config, "id" | "needsReload" | "updatedAt">;
-
-export type SourceChannel = {
-  id: number;
-  channelId: string;
-  channelName: string | null;
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type SourceChannelInput = {
-  channelId: string;
-  channelName?: string;
-  enabled?: boolean;
-};
-
-export type FilterKeyword = {
-  id: number;
-  keyword: string;
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type FilterKeywordInput = {
-  keyword: string;
-  enabled?: boolean;
-};
 
 // Prepared statements для config
 const getConfigStmt = db.prepare("SELECT * FROM config WHERE id = 1");
@@ -158,6 +131,7 @@ type SourceChannelRow = {
   channel_id: string;
   channel_name: string | null;
   enabled: number;
+  archived: number;
   created_at: string;
   updated_at: string;
 };
@@ -166,6 +140,7 @@ type FilterKeywordRow = {
   id: number;
   keyword: string;
   enabled: number;
+  archived: number;
   created_at: string;
   updated_at: string;
 };
@@ -175,6 +150,7 @@ const rowToSourceChannel = (row: SourceChannelRow): SourceChannel => ({
   channelId: row.channel_id,
   channelName: row.channel_name,
   enabled: Boolean(row.enabled),
+  archived: Boolean(row.archived),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -183,6 +159,7 @@ const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
   enabled: Boolean(row.enabled),
+  archived: Boolean(row.archived),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -292,7 +269,7 @@ export const configRepository = {
 
     updateSourceChannelStmt.run(
       input.channelName !== undefined ? input.channelName : channel.channelName,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (channel.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : channel.enabled ? 1 : 0,
       now,
       id,
     );
@@ -341,7 +318,7 @@ export const configRepository = {
 
     updateFilterKeywordStmt.run(
       input.keyword !== undefined ? input.keyword : keyword.keyword,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (keyword.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
       now,
       id,
     );

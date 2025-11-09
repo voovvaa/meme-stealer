@@ -1,43 +1,26 @@
 import { NextResponse } from "next/server";
 import { sourceChannelsRepository } from "@/lib/repositories";
+import { withErrorHandling } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
-export async function PUT(
-  request: Request,
-  props: { params: Promise<{ id: string }> }
-) {
-  try {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  return withErrorHandling(async () => {
     const params = await props.params;
     const id = parseInt(params.id);
     const body = await request.json();
     sourceChannelsRepository.update(id, body);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error updating channel:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update channel" },
-      { status: 500 }
-    );
-  }
+  }, "Failed to update channel");
 }
 
-export async function DELETE(
-  request: Request,
-  props: { params: Promise<{ id: string }> }
-) {
-  try {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  return withErrorHandling(async () => {
     const params = await props.params;
     const id = parseInt(params.id);
 
     // Архивируем вместо удаления
     sourceChannelsRepository.archive(id);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error archiving channel:", error);
-    return NextResponse.json(
-      { error: "Failed to archive channel" },
-      { status: 500 }
-    );
-  }
+  }, "Failed to archive channel");
 }

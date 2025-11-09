@@ -1,10 +1,12 @@
 import { getDatabase } from "./database.js";
+import type { QueueStatus } from "../../types/database.js";
 import type { HashedMediaFile } from "../../types/media.js";
 import { logger } from "../logger.js";
 
-const db = getDatabase();
+// Re-export для обратной совместимости
+export type { QueueStatus };
 
-export type QueueStatus = "pending" | "processing" | "completed" | "failed";
+const db = getDatabase();
 
 export type QueueItem = {
   id: number;
