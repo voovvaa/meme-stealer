@@ -66,14 +66,16 @@ export const loadConfig = async (): Promise<AppConfig> => {
 
   // Ленивый импорт для избежания циклических зависимостей
   const { configRepository } = await import("../db/configRepository.js");
+  const { sourceChannelsRepository } = await import("../db/sourceChannelsRepository.js");
+  const { filterKeywordsRepository } = await import("../db/filterKeywordsRepository.js");
 
   // Пробуем загрузить из БД
   const dbConfig = configRepository.getConfig();
 
   if (dbConfig) {
     // Конфигурация найдена в БД
-    const sourceChannels = configRepository.getEnabledSourceChannels();
-    const filterKeywords = configRepository.getEnabledFilterKeywords();
+    const sourceChannels = sourceChannelsRepository.getEnabledSourceChannels();
+    const filterKeywords = filterKeywordsRepository.getEnabledFilterKeywords();
 
     return {
       apiId: dbConfig.apiId,
@@ -92,7 +94,9 @@ export const loadConfig = async (): Promise<AppConfig> => {
 
   // Конфигурация не найдена в БД - открыть веб-интерфейс для настройки
   console.error("❌ Конфигурация не найдена в базе данных");
-  console.error("📝 Откройте веб-интерфейс (http://localhost:3333) и настройте бота в разделе Settings");
+  console.error(
+    "📝 Откройте веб-интерфейс (http://localhost:3333) и настройте бота в разделе Settings",
+  );
   process.exit(1);
 };
 
