@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import type { SourceChannel, SourceChannelInput } from "@bot-types/database";
 import type { SourceChannelRow } from "./types";
+import { setNeedsReload, getCurrentTimestamp } from "./helpers";
 
 const rowToSourceChannel = (row: SourceChannelRow): SourceChannel => ({
   id: row.id,
@@ -19,22 +20,28 @@ export const sourceChannelsRepository = {
     return rows.map((row) => rowToSourceChannel(row as SourceChannelRow));
   },
 
+  getById(id: number): SourceChannel | null {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM source_channels WHERE id = ?").get(id);
+    return row ? rowToSourceChannel(row as SourceChannelRow) : null;
+  },
+
   add(input: SourceChannelInput): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       INSERT INTO source_channels (channel_id, channel_name, enabled, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
     `,
     ).run(input.channelId, input.channelName ?? null, input.enabled !== false ? 1 : 0, now, now);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   update(id: number, input: Partial<SourceChannelInput>): void {
     const db = getDb();
-    const now = new Date().toISOString();
-    const channel = this.getAll().find((c) => c.id === id);
+    const now = getCurrentTimestamp();
+    const channel = this.getById(id);
     if (!channel) throw new Error("Канал не найден");
 
     db.prepare(
@@ -48,36 +55,36 @@ export const sourceChannelsRepository = {
       now,
       id,
     );
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   archive(id: number): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       UPDATE source_channels SET archived = 1, updated_at = ?
       WHERE id = ?
     `,
     ).run(now, id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   unarchive(id: number): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       UPDATE source_channels SET archived = 0, updated_at = ?
       WHERE id = ?
     `,
     ).run(now, id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   delete(id: number): void {
     const db = getDb();
     db.prepare("DELETE FROM source_channels WHERE id = ?").run(id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 };

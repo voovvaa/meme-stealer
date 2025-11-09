@@ -8,6 +8,7 @@ import type {
   FilterKeywordInput,
 } from "../../types/database.js";
 import { logger } from "../logger.js";
+import { setNeedsReload, getCurrentTimestamp } from "./helpers.js";
 
 // Re-export типов для обратной совместимости
 export type {
@@ -43,10 +44,6 @@ const insertConfigStmt = db.prepare(`
     target_channel_id, enable_queue, publish_interval_min,
     publish_interval_max, needs_reload, updated_at
   ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-`);
-
-const setNeedsReloadStmt = db.prepare(`
-  UPDATE config SET needs_reload = 1 WHERE id = 1
 `);
 
 const clearNeedsReloadStmt = db.prepare(`
@@ -187,7 +184,7 @@ export const configRepository = {
   },
 
   saveConfig(config: ConfigInput): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     const existingConfig = this.getConfig();
 
     if (existingConfig) {
@@ -216,12 +213,12 @@ export const configRepository = {
       );
     }
 
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info("Конфигурация обновлена, установлен флаг needs_reload");
   },
 
   setNeedsReload(): void {
-    setNeedsReloadStmt.run();
+    setNeedsReload();
   },
 
   clearNeedsReload(): void {
@@ -240,7 +237,7 @@ export const configRepository = {
   },
 
   addSourceChannel(input: SourceChannelInput): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     try {
       insertSourceChannelStmt.run(
         input.channelId,
@@ -249,7 +246,7 @@ export const configRepository = {
         now,
         now,
       );
-      setNeedsReloadStmt.run();
+      setNeedsReload();
       logger.info({ channelId: input.channelId }, "Добавлен канал-источник");
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
@@ -261,7 +258,7 @@ export const configRepository = {
   },
 
   updateSourceChannel(id: number, input: Partial<SourceChannelInput>): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     const channel = this.getAllSourceChannels().find((c) => c.id === id);
     if (!channel) {
       throw new Error("Канал не найден");
@@ -273,13 +270,13 @@ export const configRepository = {
       now,
       id,
     );
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info({ id, channelId: channel.channelId }, "Канал-источник обновлен");
   },
 
   deleteSourceChannel(id: number): void {
     deleteSourceChannelStmt.run(id);
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info({ id }, "Канал-источник удален");
   },
 
@@ -295,10 +292,10 @@ export const configRepository = {
   },
 
   addFilterKeyword(input: FilterKeywordInput): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     try {
       insertFilterKeywordStmt.run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
-      setNeedsReloadStmt.run();
+      setNeedsReload();
       logger.info({ keyword: input.keyword }, "Добавлено ключевое слово");
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
@@ -310,7 +307,7 @@ export const configRepository = {
   },
 
   updateFilterKeyword(id: number, input: Partial<FilterKeywordInput>): void {
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     const keyword = this.getAllFilterKeywords().find((k) => k.id === id);
     if (!keyword) {
       throw new Error("Ключевое слово не найдено");
@@ -322,13 +319,13 @@ export const configRepository = {
       now,
       id,
     );
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info({ id, keyword: keyword.keyword }, "Ключевое слово обновлено");
   },
 
   deleteFilterKeyword(id: number): void {
     deleteFilterKeywordStmt.run(id);
-    setNeedsReloadStmt.run();
+    setNeedsReload();
     logger.info({ id }, "Ключевое слово удалено");
   },
 };

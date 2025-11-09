@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import type { FilterKeyword, FilterKeywordInput } from "@bot-types/database";
 import type { FilterKeywordRow } from "./types";
+import { setNeedsReload, getCurrentTimestamp } from "./helpers";
 
 const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
@@ -18,22 +19,28 @@ export const filterKeywordsRepository = {
     return rows.map((row) => rowToFilterKeyword(row as FilterKeywordRow));
   },
 
+  getById(id: number): FilterKeyword | null {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM filter_keywords WHERE id = ?").get(id);
+    return row ? rowToFilterKeyword(row as FilterKeywordRow) : null;
+  },
+
   add(input: FilterKeywordInput): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       INSERT INTO filter_keywords (keyword, enabled, created_at, updated_at)
       VALUES (?, ?, ?, ?)
     `,
     ).run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   update(id: number, input: Partial<FilterKeywordInput>): void {
     const db = getDb();
-    const now = new Date().toISOString();
-    const keyword = this.getAll().find((k) => k.id === id);
+    const now = getCurrentTimestamp();
+    const keyword = this.getById(id);
     if (!keyword) throw new Error("Ключевое слово не найдено");
 
     db.prepare(
@@ -47,36 +54,36 @@ export const filterKeywordsRepository = {
       now,
       id,
     );
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   archive(id: number): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       UPDATE filter_keywords SET archived = 1, updated_at = ?
       WHERE id = ?
     `,
     ).run(now, id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   unarchive(id: number): void {
     const db = getDb();
-    const now = new Date().toISOString();
+    const now = getCurrentTimestamp();
     db.prepare(
       `
       UPDATE filter_keywords SET archived = 0, updated_at = ?
       WHERE id = ?
     `,
     ).run(now, id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 
   delete(id: number): void {
     const db = getDb();
     db.prepare("DELETE FROM filter_keywords WHERE id = ?").run(id);
-    db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
+    setNeedsReload();
   },
 };
