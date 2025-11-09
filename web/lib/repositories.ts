@@ -1,72 +1,32 @@
 /**
  * Репозитории для работы с БД из веб-интерфейса
- * Дублируют логику из bot/src/core/db/, но без зависимостей от логгера
+ * Использует типы из единого источника правды (src/types/database.ts)
  */
 
 import { getDb } from "./db";
+import type {
+  Config,
+  ConfigInput,
+  SourceChannel,
+  SourceChannelInput,
+  FilterKeyword,
+  FilterKeywordInput,
+  Post,
+  MemeStats,
+  QueueStatus,
+} from "@bot-types/database";
 
-// ===== Типы =====
-
-export type Config = {
-  id: 1;
-  apiId: number;
-  apiHash: string;
-  phoneNumber: string;
-  telegramPassword: string | null;
-  targetChannelId: string;
-  enableQueue: boolean;
-  publishIntervalMin: number;
-  publishIntervalMax: number;
-  needsReload: boolean;
-  updatedAt: string;
-};
-
-export type ConfigInput = Omit<Config, "id" | "needsReload" | "updatedAt">;
-
-export type SourceChannel = {
-  id: number;
-  channelId: string;
-  channelName: string | null;
-  enabled: boolean;
-  archived: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type SourceChannelInput = {
-  channelId: string;
-  channelName?: string;
-  enabled?: boolean;
-};
-
-export type FilterKeyword = {
-  id: number;
-  keyword: string;
-  enabled: boolean;
-  archived: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type FilterKeywordInput = {
-  keyword: string;
-  enabled?: boolean;
-};
-
-export type MemeStats = {
-  total: number;
-  totalPublished: number;
-  pending: number;
-};
-
-export type Post = {
-  id: number;
-  hash: string;
-  sourceChannelId: string;
-  sourceMessageId: number;
-  targetMessageId: number | null;
-  filePath: string | null;
-  createdAt: string;
+// Re-export типов для обратной совместимости
+export type {
+  Config,
+  ConfigInput,
+  SourceChannel,
+  SourceChannelInput,
+  FilterKeyword,
+  FilterKeywordInput,
+  Post,
+  MemeStats,
+  QueueStatus,
 };
 
 // ===== Helper функции =====
@@ -149,11 +109,12 @@ const rowToPost = (row: {
   createdAt: row.created_at,
 });
 
+// Web-версия QueueItem (без mediaData, т.к. web только показывает данные)
 export type QueueItem = {
   id: number;
   sourceChannelId: string;
   sourceMessageId: number;
-  status: string;
+  status: QueueStatus;
   scheduledAt: string;
   createdAt: string;
   processedAt: string | null;
@@ -173,7 +134,7 @@ const rowToQueueItem = (row: {
   id: row.id,
   sourceChannelId: row.source_channel_id,
   sourceMessageId: row.source_message_id,
-  status: row.status,
+  status: row.status as QueueStatus,
   scheduledAt: row.scheduled_at,
   createdAt: row.created_at,
   processedAt: row.processed_at,

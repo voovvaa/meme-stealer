@@ -1,74 +1,24 @@
 /**
- * Общие типы для веб-интерфейса
+ * Типы специфичные для веб-интерфейса
+ * Общие типы БД импортируются из @bot-types/database
  */
 
-// Базовый тип для архивируемых сущностей
-export interface ArchivableEntity {
-  id: number;
-  enabled: boolean;
-  archived: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+// Базовый тип для архивируемых сущностей импортирован из database.ts
+export type { ArchivableEntity } from "@bot-types/database";
 
-// Типы для конфигурации
-export interface Config {
-  id: 1;
-  apiId: number;
-  apiHash: string;
-  phoneNumber: string;
-  telegramPassword: string | null;
-  targetChannelId: string;
-  enableQueue: boolean;
-  publishIntervalMin: number;
-  publishIntervalMax: number;
-  needsReload: boolean;
-  updatedAt: string;
-}
+// Re-export основных типов БД для удобства (из repositories)
+export type {
+  Config,
+  ConfigInput,
+  SourceChannel,
+  SourceChannelInput,
+  FilterKeyword,
+  FilterKeywordInput,
+  Post,
+  MemeStats,
+} from "./repositories";
 
-export type ConfigInput = Omit<Config, "id" | "needsReload" | "updatedAt">;
-
-// Типы для каналов
-export interface SourceChannel extends ArchivableEntity {
-  channelId: string;
-  channelName: string | null;
-}
-
-export type SourceChannelInput = {
-  channelId: string;
-  channelName?: string;
-  enabled?: boolean;
-};
-
-// Типы для ключевых слов
-export interface FilterKeyword extends ArchivableEntity {
-  keyword: string;
-}
-
-export type FilterKeywordInput = {
-  keyword: string;
-  enabled?: boolean;
-};
-
-// Типы для статистики
-export interface MemeStats {
-  total: number;
-  totalPublished: number;
-  pending: number;
-}
-
-// Типы для постов
-export interface Post {
-  id: number;
-  hash: string;
-  sourceChannelId: string;
-  sourceMessageId: number;
-  targetMessageId: number | null;
-  filePath: string | null;
-  createdAt: string;
-}
-
-// Типы для графиков
+// Типы для графиков и статистики (web-специфичные)
 export interface ChannelStat {
   channelId: string;
   channelName: string | null;
