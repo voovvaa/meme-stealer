@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { clientLogger } from "@/lib/client-logger";
+import { PAGINATION } from "@/lib/constants";
 
 type Post = {
   id: number;
@@ -34,7 +35,7 @@ export default function HistoryPage() {
   const [data, setData] = useState<PostsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const limit = 50;
+  const limit = PAGINATION.DEFAULT_LIMIT;
 
   const loadPosts = async (pageNum: number) => {
     setLoading(true);

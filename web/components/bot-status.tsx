@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Activity, AlertCircle, RefreshCw } from "lucide-react";
+import { REFRESH_INTERVALS } from "@/lib/constants";
 
 type BotStatus = "running" | "error" | "checking";
 
@@ -24,8 +25,7 @@ export function BotStatus() {
     };
 
     checkStatus();
-    // Проверяем каждые 10 секунд
-    const interval = setInterval(checkStatus, 10000);
+    const interval = setInterval(checkStatus, REFRESH_INTERVALS.BOT_STATUS);
     return () => clearInterval(interval);
   }, []);
 
@@ -65,11 +65,11 @@ export function BotStatus() {
   const Icon = config.icon;
 
   return (
-    <div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
+    <div
+      className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${config.bgColor} ${config.borderColor}`}
+    >
       <Icon className={`h-4 w-4 ${config.iconColor}`} />
-      <span className={`text-sm font-medium ${config.color}`}>
-        {config.text}
-      </span>
+      <span className={`text-sm font-medium ${config.color}`}>{config.text}</span>
     </div>
   );
 }

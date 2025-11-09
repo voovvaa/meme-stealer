@@ -2,6 +2,7 @@ import type { TelegramClient } from "telegram";
 
 import { sendMediaFiles } from "./mediaSender.js";
 import { env } from "../../../core/config/env.js";
+import { INTERVALS, TIME } from "../../../core/constants.js";
 import { memeRepository } from "../../../core/db/memeRepository.js";
 import { queueRepository } from "../../../core/db/queueRepository.js";
 import { logger } from "../../../core/logger.js";
@@ -26,7 +27,7 @@ const calculateNextPublishTime = (): string => {
   const startTime = baseTime > now ? baseTime : now;
 
   const intervalSeconds = getRandomInterval(env.publishIntervalMin, env.publishIntervalMax);
-  const nextTime = new Date(startTime.getTime() + intervalSeconds * 1000);
+  const nextTime = new Date(startTime.getTime() + intervalSeconds * TIME.MS_IN_SECOND);
 
   return nextTime.toISOString();
 };
@@ -38,7 +39,7 @@ export class PostQueue {
   private client: TelegramClient;
   private intervalId: NodeJS.Timeout | null = null;
   private isProcessing = false;
-  private readonly checkIntervalMs = 5000; // Проверяем очередь каждые 5 секунд
+  private readonly checkIntervalMs = INTERVALS.QUEUE_CHECK;
 
   constructor(client: TelegramClient) {
     this.client = client;

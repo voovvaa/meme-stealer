@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardDrive, Calendar, TrendingUp } from "lucide-react";
 import { clientLogger } from "@/lib/client-logger";
+import { REFRESH_INTERVALS } from "@/lib/constants";
 
 type DatabaseStats = {
   status: string;
@@ -33,8 +34,7 @@ export function DatabaseStats() {
     };
 
     loadStats();
-    // Обновляем каждые 30 секунд
-    const interval = setInterval(loadStats, 30000);
+    const interval = setInterval(loadStats, REFRESH_INTERVALS.DATABASE_STATS);
     return () => clearInterval(interval);
   }, []);
 

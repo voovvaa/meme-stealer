@@ -1,4 +1,5 @@
 import { reloadConfig } from "../config/env.js";
+import { INTERVALS } from "../constants.js";
 import { configRepository } from "../db/configRepository.js";
 import { logger } from "../logger.js";
 
@@ -15,7 +16,7 @@ export class ConfigWatcher {
   private checkInterval: number;
   private reloadCallbacks: ConfigReloadCallback[] = [];
 
-  constructor(checkInterval: number = 5000) {
+  constructor(checkInterval: number = INTERVALS.CONFIG_CHECK) {
     this.checkInterval = checkInterval;
   }
 

@@ -4,6 +4,7 @@ import path from "path";
 import { stdin as input, stdout as output } from "process";
 import { createInterface } from "readline/promises";
 
+import { TIMEOUTS, INTERVALS, TIME } from "../../../core/constants.js";
 import { logger } from "../../../core/logger.js";
 
 const AUTH_CODE_FILE = path.join(process.cwd(), "sessions", "auth_code.txt");
@@ -12,8 +13,14 @@ const AUTH_PASSWORD_FILE = path.join(process.cwd(), "sessions", "auth_password.t
 /**
  * Ждет файл с кодом авторизации (для Docker без TTY)
  */
-const waitForAuthFile = async (filePath: string, timeout: number = 180000): Promise<string> => {
-  logger.info({ filePath, timeoutSec: timeout / 1000 }, "Ожидаем файл с кодом авторизации...");
+const waitForAuthFile = async (
+  filePath: string,
+  timeout: number = TIMEOUTS.AUTH_FILE_WAIT,
+): Promise<string> => {
+  logger.info(
+    { filePath, timeoutSec: timeout / TIME.MS_IN_SECOND },
+    "Ожидаем файл с кодом авторизации...",
+  );
 
   const startTime = Date.now();
 
@@ -32,8 +39,8 @@ const waitForAuthFile = async (filePath: string, timeout: number = 180000): Prom
       }
     }
 
-    // Ждем 1 секунду перед следующей проверкой
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Ждем перед следующей проверкой
+    await new Promise((resolve) => setTimeout(resolve, INTERVALS.AUTH_FILE_POLL));
   }
 
   throw new Error("Таймаут ожидания кода авторизации");

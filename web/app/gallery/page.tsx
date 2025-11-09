@@ -5,6 +5,7 @@ import Tilt from "react-parallax-tilt";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { clientLogger } from "@/lib/client-logger";
+import { PAGINATION } from "@/lib/constants";
 
 type GalleryPost = {
   id: number;
@@ -119,7 +120,7 @@ export default function GalleryPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/gallery?page=${pageNum}&limit=20`);
+      const res = await fetch(`/api/gallery?page=${pageNum}&limit=${PAGINATION.GALLERY_LIMIT}`);
       if (!res.ok) throw new Error("Failed to fetch");
 
       const data = await res.json();
