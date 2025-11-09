@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { logger } from "@/lib/logger";
+import { handleApiError } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -8,10 +10,7 @@ export const dynamic = "force-dynamic";
  * GET /api/media/[...path]
  * Отдача медиа файлов
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   try {
     const { path } = await params;
     const filePath = path.join("/");
@@ -23,10 +22,10 @@ export async function GET(
 
     // Проверяем разные варианты путей
     const possiblePaths = [
-      join(process.cwd(), "..", "media", filePath),  // Docker: /app/media/...
-      join("/app", "media", filePath),                // Абсолютный путь в Docker
-      join(process.cwd(), "media", filePath),        // Если запущено из корня
-      join("/tgcHelper", "media", filePath),         // Production вариант
+      join(process.cwd(), "..", "media", filePath), // Docker: /app/media/...
+      join("/app", "media", filePath), // Абсолютный путь в Docker
+      join(process.cwd(), "media", filePath), // Если запущено из корня
+      join("/tgcHelper", "media", filePath), // Production вариант
     ];
 
     let fileBuffer: Buffer | undefined;
@@ -43,11 +42,11 @@ export async function GET(
     }
 
     if (!fileBuffer) {
-      console.error("[Media API] File not found, tried paths:", possiblePaths);
+      logger.error({ filePath, possiblePaths }, "Media file not found");
       throw new Error("File not found in any location");
     }
 
-    console.log("[Media API] Successfully loaded from:", successPath);
+    logger.debug({ path: successPath }, "Media file served");
 
     // Определяем MIME тип по расширению
     const ext = filePath.split(".").pop()?.toLowerCase();
@@ -68,10 +67,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error serving media:", error);
-    return NextResponse.json(
-      { error: "File not found" },
-      { status: 404 }
-    );
+    return handleApiError(error, "Failed to serve media file");
   }
 }

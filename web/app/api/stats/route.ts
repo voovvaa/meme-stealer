@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
 import { statsRepository } from "@/lib/repositories";
+import { withErrorHandling } from "@/lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  try {
+  return withErrorHandling(async () => {
     const stats = statsRepository.getMemeStats();
     return NextResponse.json(stats);
-  } catch (error) {
-    console.error("Error fetching stats:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch stats" },
-      { status: 500 }
-    );
-  }
+  }, "Failed to fetch stats");
 }
