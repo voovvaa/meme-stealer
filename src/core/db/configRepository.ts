@@ -1,5 +1,4 @@
 import { getDatabase } from "./database.js";
-import { logger } from "../logger.js";
 import type {
   Config,
   ConfigInput,
@@ -8,6 +7,7 @@ import type {
   FilterKeyword,
   FilterKeywordInput,
 } from "../../types/database.js";
+import { logger } from "../logger.js";
 
 // Re-export типов для обратной совместимости
 export type {
@@ -269,7 +269,7 @@ export const configRepository = {
 
     updateSourceChannelStmt.run(
       input.channelName !== undefined ? input.channelName : channel.channelName,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (channel.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : channel.enabled ? 1 : 0,
       now,
       id,
     );
@@ -318,7 +318,7 @@ export const configRepository = {
 
     updateFilterKeywordStmt.run(
       input.keyword !== undefined ? input.keyword : keyword.keyword,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (keyword.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
       now,
       id,
     );

@@ -1,6 +1,6 @@
 import { getDatabase } from "./database.js";
-import type { HashedMediaFile } from "../../types/media.js";
 import type { QueueStatus } from "../../types/database.js";
+import type { HashedMediaFile } from "../../types/media.js";
 import { logger } from "../logger.js";
 
 // Re-export для обратной совместимости
