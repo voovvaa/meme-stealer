@@ -29,9 +29,9 @@ export type {
   QueueStatus,
 };
 
-// ===== Helper функции =====
+// ===== Database Row Types =====
 
-const rowToConfig = (row: {
+type ConfigRow = {
   id: number;
   api_id: number;
   api_hash: string;
@@ -43,7 +43,51 @@ const rowToConfig = (row: {
   publish_interval_max: number;
   needs_reload: number;
   updated_at: string;
-}): Config => ({
+};
+
+type SourceChannelRow = {
+  id: number;
+  channel_id: string;
+  channel_name: string | null;
+  enabled: number;
+  archived: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type FilterKeywordRow = {
+  id: number;
+  keyword: string;
+  enabled: number;
+  archived: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type PostRow = {
+  id: number;
+  hash: string;
+  source_channel_id: string;
+  source_message_id: number;
+  target_message_id: number | null;
+  file_path: string | null;
+  created_at: string;
+};
+
+type QueueItemRow = {
+  id: number;
+  source_channel_id: string;
+  source_message_id: number;
+  status: string;
+  scheduled_at: string;
+  created_at: string;
+  processed_at: string | null;
+  error_message: string | null;
+};
+
+// ===== Helper функции =====
+
+const rowToConfig = (row: ConfigRow): Config => ({
   id: 1,
   apiId: row.api_id,
   apiHash: row.api_hash,
@@ -57,15 +101,7 @@ const rowToConfig = (row: {
   updatedAt: row.updated_at,
 });
 
-const rowToSourceChannel = (row: {
-  id: number;
-  channel_id: string;
-  channel_name: string | null;
-  enabled: number;
-  archived: number;
-  created_at: string;
-  updated_at: string;
-}): SourceChannel => ({
+const rowToSourceChannel = (row: SourceChannelRow): SourceChannel => ({
   id: row.id,
   channelId: row.channel_id,
   channelName: row.channel_name,
@@ -75,14 +111,7 @@ const rowToSourceChannel = (row: {
   updatedAt: row.updated_at,
 });
 
-const rowToFilterKeyword = (row: {
-  id: number;
-  keyword: string;
-  enabled: number;
-  archived: number;
-  created_at: string;
-  updated_at: string;
-}): FilterKeyword => ({
+const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
   enabled: Boolean(row.enabled),
@@ -91,15 +120,7 @@ const rowToFilterKeyword = (row: {
   updatedAt: row.updated_at,
 });
 
-const rowToPost = (row: {
-  id: number;
-  hash: string;
-  source_channel_id: string;
-  source_message_id: number;
-  target_message_id: number | null;
-  file_path: string | null;
-  created_at: string;
-}): Post => ({
+const rowToPost = (row: PostRow): Post => ({
   id: row.id,
   hash: row.hash,
   sourceChannelId: row.source_channel_id,
@@ -121,16 +142,7 @@ export type QueueItem = {
   errorMessage: string | null;
 };
 
-const rowToQueueItem = (row: {
-  id: number;
-  source_channel_id: string;
-  source_message_id: number;
-  status: string;
-  scheduled_at: string;
-  created_at: string;
-  processed_at: string | null;
-  error_message: string | null;
-}): QueueItem => ({
+const rowToQueueItem = (row: QueueItemRow): QueueItem => ({
   id: row.id,
   sourceChannelId: row.source_channel_id,
   sourceMessageId: row.source_message_id,
@@ -148,7 +160,7 @@ export const configRepository = {
     const db = getDb();
     const row = db.prepare("SELECT * FROM config WHERE id = 1").get();
     if (!row) return null;
-    return rowToConfig(row as any);
+    return rowToConfig(row as ConfigRow);
   },
 
   saveConfig(config: ConfigInput): void {
@@ -157,7 +169,8 @@ export const configRepository = {
     const existingConfig = this.getConfig();
 
     if (existingConfig) {
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE config SET
           api_id = ?,
           api_hash = ?,
@@ -169,7 +182,8 @@ export const configRepository = {
           publish_interval_max = ?,
           updated_at = ?
         WHERE id = 1
-      `).run(
+      `,
+      ).run(
         config.apiId,
         config.apiHash,
         config.phoneNumber,
@@ -178,16 +192,18 @@ export const configRepository = {
         config.enableQueue ? 1 : 0,
         config.publishIntervalMin,
         config.publishIntervalMax,
-        now
+        now,
       );
     } else {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO config (
           id, api_id, api_hash, phone_number, telegram_password,
           target_channel_id, enable_queue, publish_interval_min,
           publish_interval_max, needs_reload, updated_at
         ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-      `).run(
+      `,
+      ).run(
         config.apiId,
         config.apiHash,
         config.phoneNumber,
@@ -196,7 +212,7 @@ export const configRepository = {
         config.enableQueue ? 1 : 0,
         config.publishIntervalMin,
         config.publishIntervalMax,
-        now
+        now,
       );
     }
 
@@ -209,25 +225,19 @@ export const configRepository = {
 export const sourceChannelsRepository = {
   getAll(): SourceChannel[] {
     const db = getDb();
-    const rows = db
-      .prepare("SELECT * FROM source_channels ORDER BY created_at DESC")
-      .all();
-    return rows.map((row) => rowToSourceChannel(row as any));
+    const rows = db.prepare("SELECT * FROM source_channels ORDER BY created_at DESC").all();
+    return rows.map((row) => rowToSourceChannel(row as SourceChannelRow));
   },
 
   add(input: SourceChannelInput): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO source_channels (channel_id, channel_name, enabled, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
-      input.channelId,
-      input.channelName ?? null,
-      input.enabled !== false ? 1 : 0,
-      now,
-      now
-    );
+    `,
+    ).run(input.channelId, input.channelName ?? null, input.enabled !== false ? 1 : 0, now, now);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
@@ -237,14 +247,16 @@ export const sourceChannelsRepository = {
     const channel = this.getAll().find((c) => c.id === id);
     if (!channel) throw new Error("Канал не найден");
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE source_channels SET channel_name = ?, enabled = ?, updated_at = ?
       WHERE id = ?
-    `).run(
+    `,
+    ).run(
       input.channelName !== undefined ? input.channelName : channel.channelName,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (channel.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : channel.enabled ? 1 : 0,
       now,
-      id
+      id,
     );
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
@@ -252,20 +264,24 @@ export const sourceChannelsRepository = {
   archive(id: number): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE source_channels SET archived = 1, updated_at = ?
       WHERE id = ?
-    `).run(now, id);
+    `,
+    ).run(now, id);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
   unarchive(id: number): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE source_channels SET archived = 0, updated_at = ?
       WHERE id = ?
-    `).run(now, id);
+    `,
+    ).run(now, id);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
@@ -281,19 +297,19 @@ export const sourceChannelsRepository = {
 export const filterKeywordsRepository = {
   getAll(): FilterKeyword[] {
     const db = getDb();
-    const rows = db
-      .prepare("SELECT * FROM filter_keywords ORDER BY created_at DESC")
-      .all();
-    return rows.map((row) => rowToFilterKeyword(row as any));
+    const rows = db.prepare("SELECT * FROM filter_keywords ORDER BY created_at DESC").all();
+    return rows.map((row) => rowToFilterKeyword(row as FilterKeywordRow));
   },
 
   add(input: FilterKeywordInput): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO filter_keywords (keyword, enabled, created_at, updated_at)
       VALUES (?, ?, ?, ?)
-    `).run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
+    `,
+    ).run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
@@ -303,14 +319,16 @@ export const filterKeywordsRepository = {
     const keyword = this.getAll().find((k) => k.id === id);
     if (!keyword) throw new Error("Ключевое слово не найдено");
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE filter_keywords SET keyword = ?, enabled = ?, updated_at = ?
       WHERE id = ?
-    `).run(
+    `,
+    ).run(
       input.keyword !== undefined ? input.keyword : keyword.keyword,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : (keyword.enabled ? 1 : 0),
+      input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
       now,
-      id
+      id,
     );
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
@@ -318,20 +336,24 @@ export const filterKeywordsRepository = {
   archive(id: number): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE filter_keywords SET archived = 1, updated_at = ?
       WHERE id = ?
-    `).run(now, id);
+    `,
+    ).run(now, id);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
   unarchive(id: number): void {
     const db = getDb();
     const now = new Date().toISOString();
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE filter_keywords SET archived = 0, updated_at = ?
       WHERE id = ?
-    `).run(now, id);
+    `,
+    ).run(now, id);
     db.prepare("UPDATE config SET needs_reload = 1 WHERE id = 1").run();
   },
 
@@ -369,7 +391,7 @@ export const statsRepository = {
     const rows = db
       .prepare("SELECT * FROM memes ORDER BY created_at DESC LIMIT ? OFFSET ?")
       .all(limit, offset);
-    return rows.map((row) => rowToPost(row as any));
+    return rows.map((row) => rowToPost(row as PostRow));
   },
 
   getPostsCount(): number {
@@ -383,7 +405,8 @@ export const statsRepository = {
   getChannelStats(): Array<{ channelId: string; channelName: string | null; count: number }> {
     const db = getDb();
     const rows = db
-      .prepare(`
+      .prepare(
+        `
         SELECT
           m.source_channel_id as channelId,
           sc.channel_name as channelName,
@@ -393,7 +416,8 @@ export const statsRepository = {
         GROUP BY m.source_channel_id
         ORDER BY count DESC
         LIMIT 10
-      `)
+      `,
+      )
       .all() as Array<{ channelId: string; channelName: string | null; count: number }>;
     return rows;
   },
@@ -401,7 +425,8 @@ export const statsRepository = {
   getTimelineStats(days: number = 30): Array<{ date: string; count: number }> {
     const db = getDb();
     const rows = db
-      .prepare(`
+      .prepare(
+        `
         SELECT
           DATE(created_at) as date,
           COUNT(*) as count
@@ -409,7 +434,8 @@ export const statsRepository = {
         WHERE created_at >= datetime('now', '-' || ? || ' days')
         GROUP BY DATE(created_at)
         ORDER BY date ASC
-      `)
+      `,
+      )
       .all(days) as Array<{ date: string; count: number }>;
     return rows;
   },
@@ -417,7 +443,8 @@ export const statsRepository = {
   getQueuedPosts(limit: number = 50, offset: number = 0): QueueItem[] {
     const db = getDb();
     const rows = db
-      .prepare(`
+      .prepare(
+        `
         SELECT
           id,
           source_channel_id,
@@ -431,9 +458,10 @@ export const statsRepository = {
         WHERE status = 'pending'
         ORDER BY scheduled_at ASC
         LIMIT ? OFFSET ?
-      `)
+      `,
+      )
       .all(limit, offset);
-    return rows.map((row) => rowToQueueItem(row as any));
+    return rows.map((row) => rowToQueueItem(row as QueueItemRow));
   },
 
   getQueuedPostsCount(): number {

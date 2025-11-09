@@ -1,0 +1,10 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint-staged for bot code
+npx lint-staged
+
+# Run lint-staged for web code (if changed files exist in web/)
+if git diff --cached --name-only | grep -q "^web/"; then
+  cd web && npx lint-staged
+fi
