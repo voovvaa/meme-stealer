@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import type { ArchivableEntity } from "../types";
+import { clientLogger } from "../client-logger";
 
 interface UseArchivableListOptions<T extends ArchivableEntity> {
   apiEndpoint: string;
@@ -37,7 +38,10 @@ export function useArchivableList<T extends ArchivableEntity>({
       const data = await res.json();
       setItems(data);
     } catch (error) {
-      console.error(`Failed to load ${entityNamePlural}:`, error);
+      clientLogger.error(
+        { component: "useArchivableList", action: "loadItems", entityNamePlural },
+        error,
+      );
       toast({
         title: "Ошибка",
         description: `Не удалось загрузить список ${entityNamePlural}`,
@@ -72,7 +76,7 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to toggle");
       }
     } catch (error) {
-      console.error("Failed to toggle:", error);
+      clientLogger.error({ component: "useArchivableList", action: "toggleEnabled" }, error);
       toast({
         title: "Ошибка",
         description: `Не удалось изменить статус ${entityNamePlural}`,
@@ -102,7 +106,7 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to archive");
       }
     } catch (error) {
-      console.error("Failed to archive:", error);
+      clientLogger.error({ component: "useArchivableList", action: "archive" }, error);
       toast({
         title: "Ошибка",
         description: `Не удалось архивировать ${entityName}`,
@@ -130,7 +134,7 @@ export function useArchivableList<T extends ArchivableEntity>({
         throw new Error("Failed to unarchive");
       }
     } catch (error) {
-      console.error("Failed to unarchive:", error);
+      clientLogger.error({ component: "useArchivableList", action: "unarchive" }, error);
       toast({
         title: "Ошибка",
         description: `Не удалось восстановить ${entityName}`,

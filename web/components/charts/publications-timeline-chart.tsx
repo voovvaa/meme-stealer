@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { clientLogger } from "@/lib/client-logger";
 
 type TimelineStat = {
   date: string;
@@ -29,7 +38,7 @@ export function PublicationsTimelineChart() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error loading timeline stats:", err);
+        clientLogger.error({ component: "PublicationsTimelineChart", action: "loadStats" }, err);
         setLoading(false);
       });
   }, []);
@@ -77,10 +86,7 @@ export function PublicationsTimelineChart() {
               className="text-xs"
               tick={{ fill: "hsl(var(--muted-foreground))" }}
             />
-            <YAxis
-              className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
-            />
+            <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--background))",

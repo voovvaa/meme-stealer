@@ -1,7 +1,6 @@
-import { getDb } from "../db";
 import type { FilterKeyword, FilterKeywordInput } from "@bot-types/database";
 import type { FilterKeywordRow } from "./types";
-import { setNeedsReload, getCurrentTimestamp } from "./helpers";
+import { createArchivableRepository } from "./createArchivableRepository";
 
 const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
@@ -12,78 +11,23 @@ const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   updatedAt: row.updated_at,
 });
 
-export const filterKeywordsRepository = {
-  getAll(): FilterKeyword[] {
-    const db = getDb();
-    const rows = db.prepare("SELECT * FROM filter_keywords ORDER BY created_at DESC").all();
-    return rows.map((row) => rowToFilterKeyword(row as FilterKeywordRow));
-  },
+export const filterKeywordsRepository = createArchivableRepository<
+  FilterKeyword,
+  FilterKeywordInput,
+  FilterKeywordRow
+>({
+  tableName: "filter_keywords",
+  rowMapper: rowToFilterKeyword,
+  notFoundError: "Ключевое слово не найдено",
 
-  getById(id: number): FilterKeyword | null {
-    const db = getDb();
-    const row = db.prepare("SELECT * FROM filter_keywords WHERE id = ?").get(id);
-    return row ? rowToFilterKeyword(row as FilterKeywordRow) : null;
-  },
+  insertFields: "keyword, enabled, created_at, updated_at",
+  insertPlaceholders: "?, ?, ?, ?",
+  buildInsertParams: (input, now) => [input.keyword, input.enabled !== false ? 1 : 0, now, now],
 
-  add(input: FilterKeywordInput): void {
-    const db = getDb();
-    const now = getCurrentTimestamp();
-    db.prepare(
-      `
-      INSERT INTO filter_keywords (keyword, enabled, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
-    `,
-    ).run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
-    setNeedsReload();
-  },
-
-  update(id: number, input: Partial<FilterKeywordInput>): void {
-    const db = getDb();
-    const now = getCurrentTimestamp();
-    const keyword = this.getById(id);
-    if (!keyword) throw new Error("Ключевое слово не найдено");
-
-    db.prepare(
-      `
-      UPDATE filter_keywords SET keyword = ?, enabled = ?, updated_at = ?
-      WHERE id = ?
-    `,
-    ).run(
-      input.keyword !== undefined ? input.keyword : keyword.keyword,
-      input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
-      now,
-      id,
-    );
-    setNeedsReload();
-  },
-
-  archive(id: number): void {
-    const db = getDb();
-    const now = getCurrentTimestamp();
-    db.prepare(
-      `
-      UPDATE filter_keywords SET archived = 1, updated_at = ?
-      WHERE id = ?
-    `,
-    ).run(now, id);
-    setNeedsReload();
-  },
-
-  unarchive(id: number): void {
-    const db = getDb();
-    const now = getCurrentTimestamp();
-    db.prepare(
-      `
-      UPDATE filter_keywords SET archived = 0, updated_at = ?
-      WHERE id = ?
-    `,
-    ).run(now, id);
-    setNeedsReload();
-  },
-
-  delete(id: number): void {
-    const db = getDb();
-    db.prepare("DELETE FROM filter_keywords WHERE id = ?").run(id);
-    setNeedsReload();
-  },
-};
+  updateFields: "keyword = ?, enabled = ?, updated_at = ?",
+  buildUpdateParams: (input, existing, now) => [
+    input.keyword !== undefined ? input.keyword : existing.keyword,
+    input.enabled !== undefined ? (input.enabled ? 1 : 0) : existing.enabled ? 1 : 0,
+    now,
+  ],
+});

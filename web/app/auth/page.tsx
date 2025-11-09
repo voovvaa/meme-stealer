@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertCircle, CheckCircle } from "lucide-react";
+import { clientLogger } from "@/lib/client-logger";
 
 export default function AuthPage() {
   const [code, setCode] = useState("");
@@ -49,7 +50,7 @@ export default function AuthPage() {
         throw new Error("Failed to submit code");
       }
     } catch (error) {
-      console.error("Failed to submit code:", error);
+      clientLogger.error({ component: "AuthPage", action: "submitCode" }, error);
       toast({
         title: "Ошибка",
         description: "Не удалось отправить код",
@@ -64,9 +65,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Авторизация Telegram</CardTitle>
-          <CardDescription>
-            Бот запрашивает код подтверждения для авторизации
-          </CardDescription>
+          <CardDescription>Бот запрашивает код подтверждения для авторизации</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-3">
@@ -81,9 +80,7 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">
-                Код из Telegram
-              </label>
+              <label className="text-sm font-medium mb-2 block">Код из Telegram</label>
               <Input
                 type="text"
                 value={code}
