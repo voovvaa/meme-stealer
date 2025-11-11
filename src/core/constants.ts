@@ -5,7 +5,8 @@ export const TELEGRAM_CLIENT_CONFIG = {
   CONNECTION_RETRIES: 10,
   REQUEST_RETRIES: 5,
   RETRY_DELAY: 2000,
-  TIMEOUT: 30,
+  /** Таймаут в секундах для запросов и обновлений (увеличен для стабильности) */
+  TIMEOUT: 60,
 } as const;
 
 /**
