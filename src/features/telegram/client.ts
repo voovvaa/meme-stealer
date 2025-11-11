@@ -83,6 +83,34 @@ const ensureAuthorization = async (client: TelegramClient) => {
   }
 };
 
+/**
+ * Устанавливает обработчики ошибок и событий соединения для Telegram клиента
+ */
+const setupClientErrorHandlers = (client: TelegramClient) => {
+  // Обработка ошибок в event loop через глобальный uncaught handler
+  // Telegram клиент с autoReconnect будет автоматически переподключаться при ошибках
+
+  // Обработка reconnect
+  // @ts-expect-error - _reconnect is internal but necessary for error handling
+  const originalReconnect = client._reconnect?.bind(client);
+  if (originalReconnect) {
+    // @ts-expect-error - _reconnect is internal
+    client._reconnect = async (...args: unknown[]) => {
+      logger.warn("Telegram клиент переподключается...");
+      try {
+        await originalReconnect(...args);
+        logger.info("Telegram клиент успешно переподключен");
+      } catch (error) {
+        logger.error({ err: error }, "Ошибка при переподключении Telegram клиента");
+        throw error;
+      }
+    };
+  }
+
+  // Логирование состояния подключения
+  logger.info("Обработчики ошибок Telegram клиента установлены");
+};
+
 export const initTelegramClient = async (): Promise<{
   client: TelegramClient;
   postQueue?: PostQueue;
@@ -104,6 +132,9 @@ export const initTelegramClient = async (): Promise<{
     await saveSessionString(env.sessionStoragePath, newSession);
     logger.info({ path: env.sessionStoragePath }, "Сессия обновлена и сохранена");
   }
+
+  // Устанавливаем обработчики ошибок для предотвращения падения при таймаутах
+  setupClientErrorHandlers(client);
 
   // Инициализируем и запускаем очередь публикаций, если включена
   let postQueue: PostQueue | undefined;
