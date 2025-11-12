@@ -105,17 +105,20 @@ export function ChannelActivityChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Активность по каналам</CardTitle>
-        <CardDescription>Топ-10 каналов по количеству постов</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Активность по каналам</CardTitle>
+        <CardDescription className="text-sm">Топ-10 каналов по количеству постов</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height={300} className="sm:h-[350px]">
+          <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="name"
               className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+              angle={-45}
+              textAnchor="end"
+              height={80}
             />
             <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip content={<CustomTooltip />} />

@@ -54,18 +54,18 @@ export function DatabaseStats() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Статистика базы данных</CardTitle>
-        <CardDescription>Информация о хранилище мемов</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Статистика базы данных</CardTitle>
+        <CardDescription className="text-sm">Информация о хранилище мемов</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <HardDrive className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Размер БД</p>
-              <p className="text-2xl font-bold">{stats.sizeMB} MB</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Размер БД</p>
+              <p className="text-xl sm:text-2xl font-bold truncate">{stats.sizeMB} MB</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {stats.totalMemes.toLocaleString()} записей
               </p>
@@ -76,9 +76,9 @@ export function DatabaseStats() {
             <div className="p-2 bg-green-500/10 rounded-lg">
               <TrendingUp className="h-5 w-5 text-green-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Публикация</p>
-              <p className="text-2xl font-bold">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Публикация</p>
+              <p className="text-xl sm:text-2xl font-bold">
                 {stats.totalMemes > 0
                   ? ((stats.publishedMemes / stats.totalMemes) * 100).toFixed(1)
                   : "0.0"}
@@ -94,10 +94,10 @@ export function DatabaseStats() {
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <Calendar className="h-5 w-5 text-blue-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Период работы</p>
-              <p className="text-sm font-semibold">{formatDate(stats.firstMeme)}</p>
-              <p className="text-xs text-muted-foreground">до {formatDate(stats.lastMeme)}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Период работы</p>
+              <p className="text-sm font-semibold truncate">{formatDate(stats.firstMeme)}</p>
+              <p className="text-xs text-muted-foreground truncate">до {formatDate(stats.lastMeme)}</p>
             </div>
           </div>
         </div>

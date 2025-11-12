@@ -39,7 +39,10 @@ export function ArchivableTable<T extends ArchivableEntity>({
     <>
       {/* Активные элементы */}
       {activeItems.length > 0 && (
-        <Table>
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden">
+              <Table>
           <TableHeader>
             <TableRow>
               {columns.map((col, idx) => (
@@ -64,35 +67,45 @@ export function ArchivableTable<T extends ArchivableEntity>({
                     {item.enabled ? "Включен" : "Выключен"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onToggleEnabled(item)}
-                    disabled={actionLoading}
-                  >
-                    {item.enabled ? "Выключить" : "Включить"}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onArchive(item.id)}
-                    disabled={actionLoading}
-                  >
-                    Архивировать
-                  </Button>
+                <TableCell className="text-right">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onToggleEnabled(item)}
+                      disabled={actionLoading}
+                      className="whitespace-nowrap"
+                    >
+                      {item.enabled ? "Выключить" : "Включить"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onArchive(item.id)}
+                      disabled={actionLoading}
+                      className="whitespace-nowrap"
+                    >
+                      Архивировать
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Архив */}
       {archivedItems.length > 0 && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Архив</h3>
-          <Table>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <div className="overflow-hidden">
+                <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((col, idx) => (
@@ -121,6 +134,7 @@ export function ArchivableTable<T extends ArchivableEntity>({
                       size="sm"
                       onClick={() => onUnarchive(item.id)}
                       disabled={actionLoading}
+                      className="whitespace-nowrap"
                     >
                       Восстановить
                     </Button>
@@ -129,6 +143,9 @@ export function ArchivableTable<T extends ArchivableEntity>({
               ))}
             </TableBody>
           </Table>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

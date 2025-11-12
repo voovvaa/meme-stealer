@@ -67,48 +67,48 @@ export default function ChannelsPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Загрузка...</div>;
+    return <div>Загрузка...</div>;
   }
 
   return (
-    <div className="p-8">
+    <div>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle>Каналы-источники</CardTitle>
-              <CardDescription>Управление каналами, из которых копируются мемы</CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Каналы-источники</CardTitle>
+              <CardDescription className="text-sm">Управление каналами, из которых копируются мемы</CardDescription>
             </div>
-            <Button onClick={() => setShowAddForm(!showAddForm)}>
+            <Button onClick={() => setShowAddForm(!showAddForm)} className="sm:shrink-0">
               {showAddForm ? "Отмена" : "Добавить канал"}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {showAddForm && (
-            <form onSubmit={handleAddChannel} className="mb-6 p-4 border rounded-lg bg-muted/50">
+            <form onSubmit={handleAddChannel} className="mb-6 p-3 sm:p-4 border rounded-lg bg-muted/50">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Channel ID или Username *</label>
+                  <label className="block text-sm font-medium mb-2">Channel ID или Username *</label>
                   <Input
                     value={newChannel.channelId}
                     onChange={(e) => setNewChannel({ ...newChannel, channelId: e.target.value })}
-                    placeholder="-1001234567890 или @channel_username"
+                    placeholder="-1001234567890 или @channel"
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Numeric ID (например: -1001234567890) или username (например: @mishbekich)
+                    Numeric ID или username
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Название (опционально)</label>
+                  <label className="block text-sm font-medium mb-2">Название (опционально)</label>
                   <Input
                     value={newChannel.channelName}
                     onChange={(e) => setNewChannel({ ...newChannel, channelName: e.target.value })}
                     placeholder="Мой канал"
                   />
                 </div>
-                <Button type="submit" disabled={actionLoading}>
+                <Button type="submit" disabled={actionLoading} className="w-full sm:w-auto">
                   {actionLoading ? "Добавление..." : "Добавить"}
                 </Button>
               </div>
