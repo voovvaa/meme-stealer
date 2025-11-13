@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { clientLogger } from "@/lib/client-logger";
 import { PAGINATION } from "@/lib/constants";
+import { Trash2 } from "lucide-react";
 
 type QueueItem = {
   id: number;
@@ -37,6 +38,7 @@ export default function QueuePage() {
   const [data, setData] = useState<QueueResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const limit = PAGINATION.DEFAULT_LIMIT;
 
   const loadQueuedPosts = async (pageNum: number) => {
@@ -50,6 +52,31 @@ export default function QueuePage() {
       clientLogger.error({ component: "QueuePage", action: "loadQueuedPosts" }, error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteQueueItem = async (id: number) => {
+    if (!confirm("Удалить эту отложенную запись? Она не будет опубликована.")) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/queue/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete queue item");
+      }
+
+      // Перезагружаем текущую страницу
+      await loadQueuedPosts(page);
+    } catch (error) {
+      clientLogger.error({ component: "QueuePage", action: "deleteQueueItem" }, error);
+      alert("Ошибка при удалении записи");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -107,17 +134,27 @@ export default function QueuePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Превью</TableHead>
                     <TableHead>ID</TableHead>
                     <TableHead>Канал-источник</TableHead>
                     <TableHead>ID сообщения</TableHead>
                     <TableHead>Время публикации</TableHead>
                     <TableHead>Статус</TableHead>
                     <TableHead>Создан</TableHead>
+                    <TableHead>Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {queuedPosts.map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell>
+                        <img
+                          src={`/api/queue/${item.id}/preview`}
+                          alt={`Preview ${item.id}`}
+                          className="w-16 h-16 object-cover rounded"
+                          loading="lazy"
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{item.id}</TableCell>
                       <TableCell className="font-mono text-sm">{item.sourceChannelId}</TableCell>
                       <TableCell className="font-mono text-sm">{item.sourceMessageId}</TableCell>
@@ -136,6 +173,17 @@ export default function QueuePage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDate(item.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteQueueItem(item.id)}
+                          disabled={deletingId === item.id}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

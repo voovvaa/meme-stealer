@@ -97,6 +97,11 @@ const getLastScheduledTimeStmt = db.prepare(`
   LIMIT 1
 `);
 
+const deleteByIdStmt = db.prepare(`
+  DELETE FROM post_queue
+  WHERE id = ? AND status = 'pending'
+`);
+
 /**
  * Парсит строку JSON в объект HashedMediaFile
  */
@@ -247,5 +252,26 @@ export const queueRepository = {
   getLastScheduledTime(): string | null {
     const row = getLastScheduledTimeStmt.get() as { scheduled_at: string } | undefined;
     return row?.scheduled_at ?? null;
+  },
+
+  /**
+   * Удаляет элемент из очереди по ID (только pending)
+   */
+  deleteById(id: number): boolean {
+    try {
+      const result = deleteByIdStmt.run(id);
+      const deleted = result.changes > 0;
+
+      if (deleted) {
+        logger.debug({ queueItemId: id }, "Элемент удален из очереди");
+      } else {
+        logger.warn({ queueItemId: id }, "Элемент не найден или уже обработан");
+      }
+
+      return deleted;
+    } catch (error) {
+      logger.error({ err: error, queueItemId: id }, "Ошибка удаления из очереди");
+      throw error;
+    }
   },
 };

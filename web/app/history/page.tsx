@@ -21,6 +21,7 @@ type Post = {
   sourceChannelId: string;
   sourceMessageId: number;
   targetMessageId: number | null;
+  filePath: string | null;
   createdAt: string;
 };
 
@@ -77,6 +78,7 @@ export default function HistoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Превью</TableHead>
                     <TableHead>ID</TableHead>
                     <TableHead>Канал-источник</TableHead>
                     <TableHead>ID сообщения</TableHead>
@@ -87,6 +89,20 @@ export default function HistoryPage() {
                 <TableBody>
                   {posts.map((post) => (
                     <TableRow key={post.id}>
+                      <TableCell>
+                        {post.filePath ? (
+                          <img
+                            src={`/api/media/${post.filePath}`}
+                            alt={`Post ${post.id}`}
+                            className="w-16 h-16 object-cover rounded"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                            Нет фото
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{post.id}</TableCell>
                       <TableCell className="font-mono text-sm">{post.sourceChannelId}</TableCell>
                       <TableCell className="font-mono text-sm">{post.sourceMessageId}</TableCell>

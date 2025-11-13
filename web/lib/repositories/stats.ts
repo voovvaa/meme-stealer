@@ -147,4 +147,20 @@ export const statsRepository = {
       .get() as { count: number };
     return row.count;
   },
+
+  getQueuedPostMediaData(id: number): string | null {
+    const db = getDb();
+    const row = db
+      .prepare("SELECT media_data FROM post_queue WHERE id = ?")
+      .get(id) as { media_data: string } | undefined;
+    return row?.media_data || null;
+  },
+
+  deleteQueuedPost(id: number): boolean {
+    const db = getDb();
+    const result = db
+      .prepare("DELETE FROM post_queue WHERE id = ? AND status = 'pending'")
+      .run(id);
+    return result.changes > 0;
+  },
 };
