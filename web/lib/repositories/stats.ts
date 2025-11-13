@@ -88,7 +88,7 @@ export const statsRepository = {
           COUNT(*) as count
         FROM memes m
         LEFT JOIN source_channels sc ON m.source_channel_id = sc.channel_id
-        WHERE sc.enabled = 1 AND sc.archived = 0
+        WHERE sc.channel_id IS NULL OR (sc.enabled = 1 AND sc.archived = 0)
         GROUP BY m.source_channel_id
         ORDER BY count DESC
         LIMIT 10
