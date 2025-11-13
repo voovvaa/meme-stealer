@@ -55,17 +55,23 @@ export const statsRepository = {
     };
   },
 
-  getPosts(limit: number = 50, offset: number = 0): Post[] {
+  getPosts(limit: number = 50, offset: number = 0, publishedOnly: boolean = false): Post[] {
     const db = getDb();
+    const whereClause = publishedOnly
+      ? "WHERE file_path IS NOT NULL AND target_message_id IS NOT NULL"
+      : "";
     const rows = db
-      .prepare("SELECT * FROM memes ORDER BY created_at DESC LIMIT ? OFFSET ?")
+      .prepare(`SELECT * FROM memes ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
       .all(limit, offset);
     return rows.map((row) => rowToPost(row as PostRow));
   },
 
-  getPostsCount(): number {
+  getPostsCount(publishedOnly: boolean = false): number {
     const db = getDb();
-    const row = db.prepare("SELECT COUNT(*) as count FROM memes").get() as {
+    const whereClause = publishedOnly
+      ? "WHERE file_path IS NOT NULL AND target_message_id IS NOT NULL"
+      : "";
+    const row = db.prepare(`SELECT COUNT(*) as count FROM memes ${whereClause}`).get() as {
       count: number;
     };
     return row.count;

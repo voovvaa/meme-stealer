@@ -1,14 +1,60 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, CheckCircle2, Clock } from "lucide-react";
-import { ChannelActivityChart } from "@/components/charts/channel-activity-chart";
-import { PublicationsTimelineChart } from "@/components/charts/publications-timeline-chart";
 import { BotStatus } from "@/components/bot-status";
 import { DatabaseStats } from "@/components/database-stats";
 import { clientLogger } from "@/lib/client-logger";
+
+// Dynamic imports для Recharts компонентов (~500KB bundle size optimization)
+const ChannelActivityChart = dynamic(
+  () =>
+    import("@/components/charts/channel-activity-chart").then((mod) => ({
+      default: mod.ChannelActivityChart,
+    })),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <CardTitle>Активность каналов</CardTitle>
+          <CardDescription>Топ-10 каналов по количеству постов</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80 flex items-center justify-center">
+            <p className="text-muted-foreground">Загрузка графика...</p>
+          </div>
+        </CardContent>
+      </Card>
+    ),
+    ssr: false,
+  },
+);
+
+const PublicationsTimelineChart = dynamic(
+  () =>
+    import("@/components/charts/publications-timeline-chart").then((mod) => ({
+      default: mod.PublicationsTimelineChart,
+    })),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <CardTitle>График публикаций</CardTitle>
+          <CardDescription>Количество постов за последние 30 дней</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80 flex items-center justify-center">
+            <p className="text-muted-foreground">Загрузка графика...</p>
+          </div>
+        </CardContent>
+      </Card>
+    ),
+    ssr: false,
+  },
+);
 
 type Stats = {
   total: number;
