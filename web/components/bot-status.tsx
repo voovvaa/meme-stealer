@@ -66,10 +66,10 @@ export function BotStatus() {
 
   return (
     <div
-      className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${config.bgColor} ${config.borderColor}`}
+      className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${config.bgColor} ${config.borderColor} min-h-[44px]`}
     >
-      <Icon className={`h-4 w-4 ${config.iconColor}`} />
-      <span className={`text-sm font-medium ${config.color}`}>{config.text}</span>
+      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${config.iconColor}`} />
+      <span className={`text-xs sm:text-sm font-medium ${config.color}`}>{config.text}</span>
     </div>
   );
 }

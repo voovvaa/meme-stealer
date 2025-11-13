@@ -74,17 +74,20 @@ export function PublicationsTimelineChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Публикации по времени</CardTitle>
-        <CardDescription>Количество постов за последние 30 дней</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Публикации по времени</CardTitle>
+        <CardDescription className="text-sm">Количество постов за последние 30 дней</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height={300} className="sm:h-[350px]">
+          <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="formattedDate"
               className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
             />
             <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
             <Tooltip
