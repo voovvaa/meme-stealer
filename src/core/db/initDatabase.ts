@@ -6,7 +6,7 @@ import { logger } from "../logger.js";
  * Версия схемы базы данных
  * Увеличивайте при изменении структуры таблиц
  */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /**
  * Инициализирует все таблицы базы данных
@@ -61,12 +61,15 @@ export const initializeDatabase = (db: ReturnType<typeof Database>): void => {
         channel_id TEXT NOT NULL UNIQUE,
         channel_name TEXT,
         enabled INTEGER NOT NULL DEFAULT 1,
+        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
 
       CREATE INDEX IF NOT EXISTS idx_source_channels_enabled
         ON source_channels(enabled);
+      CREATE INDEX IF NOT EXISTS idx_source_channels_archived
+        ON source_channels(archived);
     `);
 
     // ==================== КЛЮЧЕВЫЕ СЛОВА ФИЛЬТРАЦИИ ====================
@@ -75,12 +78,15 @@ export const initializeDatabase = (db: ReturnType<typeof Database>): void => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         keyword TEXT NOT NULL UNIQUE,
         enabled INTEGER NOT NULL DEFAULT 1,
+        archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
 
       CREATE INDEX IF NOT EXISTS idx_filter_keywords_enabled
         ON filter_keywords(enabled);
+      CREATE INDEX IF NOT EXISTS idx_filter_keywords_archived
+        ON filter_keywords(archived);
     `);
 
     // ==================== МЕМЫ (ИСТОРИЯ) ====================

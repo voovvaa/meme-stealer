@@ -15,12 +15,12 @@ const getFilterKeywordByIdStmt = db.prepare(`
 `);
 
 const getEnabledFilterKeywordsStmt = db.prepare(`
-  SELECT * FROM filter_keywords WHERE enabled = 1 ORDER BY created_at DESC
+  SELECT * FROM filter_keywords WHERE enabled = 1 AND archived = 0 ORDER BY created_at DESC
 `);
 
 const insertFilterKeywordStmt = db.prepare(`
-  INSERT INTO filter_keywords (keyword, enabled, created_at, updated_at)
-  VALUES (?, ?, ?, ?)
+  INSERT INTO filter_keywords (keyword, enabled, archived, created_at, updated_at)
+  VALUES (?, ?, 0, ?, ?)
 `);
 
 const updateFilterKeywordStmt = db.prepare(`
