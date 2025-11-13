@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Tilt from "react-parallax-tilt";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { clientLogger } from "@/lib/client-logger";
@@ -14,78 +13,32 @@ type GalleryPost = {
   createdAt: string;
 };
 
-// Компонент с параллакс эффектом (оптимизировано - один scroll listener на всю страницу)
-function ParallaxCard({
-  post,
-  index,
-  scrollY,
-}: {
-  post: GalleryPost;
-  index: number;
-  scrollY: number;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [parallaxOffset, setParallaxOffset] = useState(0);
-
-  useEffect(() => {
-    if (!cardRef.current) return;
-
-    const rect = cardRef.current.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const cardCenter = rect.top + rect.height / 2;
-
-    // Вычисляем смещение относительно центра экрана
-    // Чем дальше от центра, тем больше смещение
-    const offset = (windowHeight / 2 - cardCenter) * 0.05;
-    setParallaxOffset(offset);
-  }, [scrollY]); // Пересчитываем только при изменении глобального scrollY
-
+// Простой компонент карточки без анимаций
+function GalleryCard({ post }: { post: GalleryPost }) {
   return (
-    <div
-      ref={cardRef}
-      className="break-inside-avoid mb-4"
-      style={{
-        transform: `translate3d(0, ${parallaxOffset}px, 0)`,
-        transition: "transform 0.15s cubic-bezier(0.33, 1, 0.68, 1)",
-        willChange: "transform",
-      }}
-    >
-      <Tilt
-        tiltMaxAngleX={5}
-        tiltMaxAngleY={5}
-        scale={1.02}
-        transitionSpeed={350}
-        glareEnable={true}
-        glareMaxOpacity={0.12}
-        glareColor="rgba(255, 255, 255, 0.3)"
-        glarePosition="all"
-        className="w-full"
-      >
-        <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
-          <img
-            src={`/api/media/${post.filePath.replace(/^media\//, "")}`}
-            alt={`Мем ${post.hash}`}
-            className="w-full h-auto select-none transform-gpu"
-            loading="lazy"
-            draggable={false}
-          />
-        </Card>
-      </Tilt>
+    <div className="break-inside-avoid mb-4">
+      <Card className="overflow-hidden">
+        <img
+          src={`/api/media/${post.filePath.replace(/^media\//, "")}`}
+          alt={`Мем ${post.hash}`}
+          className="w-full h-auto"
+          loading="lazy"
+          draggable={false}
+        />
+      </Card>
     </div>
   );
 }
 
-// Скелетон для загрузки с shimmer эффектом
+// Простой скелетон для загрузки
 function SkeletonCard({ index }: { index: number }) {
   const heights = [280, 320, 240, 360, 300];
   const height = heights[index % heights.length];
 
   return (
     <div className="break-inside-avoid mb-4">
-      <Card className="overflow-hidden relative">
-        <div className="w-full bg-muted relative overflow-hidden" style={{ height: `${height}px` }}>
-          <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        </div>
+      <Card className="overflow-hidden">
+        <div className="w-full bg-muted" style={{ height: `${height}px` }} />
       </Card>
     </div>
   );
@@ -97,33 +50,8 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const [scrollY, setScrollY] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
-
-  // Глобальный scroll listener (один для всех карточек вместо 50+)
-  useEffect(() => {
-    const handleScroll = () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-
-      rafRef.current = requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Инициализация
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
 
   const loadPosts = useCallback(async (pageNum: number) => {
     if (loadingRef.current) return;
@@ -185,7 +113,7 @@ export default function GalleryPage() {
       <div>
         <h1 className="text-3xl font-bold">Галерея мемов</h1>
         <p className="text-muted-foreground">
-          Бесконечная лента опубликованных мемов с параллакс эффектом
+          Бесконечная лента опубликованных мемов
         </p>
       </div>
 
@@ -201,8 +129,8 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
-          {posts.map((post, index) => (
-            <ParallaxCard key={post.id} post={post} index={index} scrollY={scrollY} />
+          {posts.map((post) => (
+            <GalleryCard key={post.id} post={post} />
           ))}
         </div>
       )}
