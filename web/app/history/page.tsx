@@ -92,7 +92,7 @@ export default function HistoryPage() {
                       <TableCell>
                         {post.filePath ? (
                           <img
-                            src={`/api/media/${post.filePath}`}
+                            src={`/api/media/${post.filePath.replace(/^media\//, "")}`}
                             alt={`Post ${post.id}`}
                             className="w-16 h-16 object-cover rounded"
                             loading="lazy"
