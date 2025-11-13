@@ -18,6 +18,8 @@ const EnvSchema = z.object({
   MEME_DB_PATH: z.string().optional(),
 });
 
+import type { FilterKeyword } from "../../types/database.js";
+
 /**
  * Тип конфигурации приложения
  */
@@ -28,7 +30,7 @@ export type AppConfig = {
   telegramPassword: string | undefined;
   targetChannelId: string;
   sourceChannelIds: string[];
-  adKeywords: string[];
+  adFilters: FilterKeyword[];
   logLevel: (typeof logLevels)[number];
   sessionStoragePath: string;
   memeDbPath: string;
@@ -84,7 +86,7 @@ export const loadConfig = async (): Promise<AppConfig> => {
       telegramPassword: dbConfig.telegramPassword ?? undefined,
       targetChannelId: dbConfig.targetChannelId,
       sourceChannelIds: sourceChannels.map((ch) => ch.channelId),
-      adKeywords: filterKeywords.map((kw) => kw.keyword),
+      adFilters: filterKeywords,
       enableQueue: dbConfig.enableQueue,
       publishIntervalMin: dbConfig.publishIntervalMin,
       publishIntervalMax: dbConfig.publishIntervalMax,

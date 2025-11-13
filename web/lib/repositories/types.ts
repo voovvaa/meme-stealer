@@ -29,6 +29,7 @@ export type SourceChannelRow = {
 export type FilterKeywordRow = {
   id: number;
   keyword: string;
+  is_regex: number;
   enabled: number;
   archived: number;
   created_at: string;

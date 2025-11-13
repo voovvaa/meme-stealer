@@ -44,6 +44,7 @@ export type SourceChannelInput = {
 export type FilterKeyword = {
   id: number;
   keyword: string;
+  isRegex: boolean;
   enabled: boolean;
   archived: boolean;
   createdAt: string;
@@ -52,6 +53,7 @@ export type FilterKeyword = {
 
 export type FilterKeywordInput = {
   keyword: string;
+  isRegex?: boolean;
   enabled?: boolean;
 };
 

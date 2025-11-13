@@ -6,7 +6,7 @@ import { logger } from "../logger.js";
  * Версия схемы базы данных
  * Увеличивайте при изменении структуры таблиц
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 /**
  * Инициализирует все таблицы базы данных
@@ -77,6 +77,7 @@ export const initializeDatabase = (db: ReturnType<typeof Database>): void => {
       CREATE TABLE IF NOT EXISTS filter_keywords (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         keyword TEXT NOT NULL UNIQUE,
+        is_regex INTEGER NOT NULL DEFAULT 0,
         enabled INTEGER NOT NULL DEFAULT 1,
         archived INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -130,6 +131,21 @@ export const initializeDatabase = (db: ReturnType<typeof Database>): void => {
       CREATE INDEX IF NOT EXISTS idx_queue_created
         ON post_queue(created_at);
     `);
+
+    // ==================== МИГРАЦИИ ====================
+    // Миграция с версии 2 на 3: добавление is_regex в filter_keywords
+    if (currentVersion && currentVersion.version < 3) {
+      logger.info("🔄 Миграция: добавление поля is_regex в filter_keywords...");
+      try {
+        db.exec(`
+          ALTER TABLE filter_keywords ADD COLUMN is_regex INTEGER NOT NULL DEFAULT 0;
+        `);
+        logger.info("✅ Миграция завершена");
+      } catch (error) {
+        // Колонка уже существует - пропускаем
+        logger.debug("Колонка is_regex уже существует");
+      }
+    }
 
     // Сохраняем версию схемы
     if (!currentVersion) {

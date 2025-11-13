@@ -5,6 +5,7 @@ import { createArchivableRepository } from "./createArchivableRepository";
 const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
+  isRegex: Boolean(row.is_regex),
   enabled: Boolean(row.enabled),
   archived: Boolean(row.archived),
   createdAt: row.created_at,
@@ -20,13 +21,20 @@ export const filterKeywordsRepository = createArchivableRepository<
   rowMapper: rowToFilterKeyword,
   notFoundError: "Ключевое слово не найдено",
 
-  insertFields: "keyword, enabled, created_at, updated_at",
-  insertPlaceholders: "?, ?, ?, ?",
-  buildInsertParams: (input, now) => [input.keyword, input.enabled !== false ? 1 : 0, now, now],
+  insertFields: "keyword, is_regex, enabled, created_at, updated_at",
+  insertPlaceholders: "?, ?, ?, ?, ?",
+  buildInsertParams: (input, now) => [
+    input.keyword,
+    input.isRegex ? 1 : 0,
+    input.enabled !== false ? 1 : 0,
+    now,
+    now,
+  ],
 
-  updateFields: "keyword = ?, enabled = ?, updated_at = ?",
+  updateFields: "keyword = ?, is_regex = ?, enabled = ?, updated_at = ?",
   buildUpdateParams: (input, existing, now) => [
     input.keyword !== undefined ? input.keyword : existing.keyword,
+    input.isRegex !== undefined ? (input.isRegex ? 1 : 0) : existing.isRegex ? 1 : 0,
     input.enabled !== undefined ? (input.enabled ? 1 : 0) : existing.enabled ? 1 : 0,
     now,
   ],

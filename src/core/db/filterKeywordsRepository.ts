@@ -19,12 +19,12 @@ const getEnabledFilterKeywordsStmt = db.prepare(`
 `);
 
 const insertFilterKeywordStmt = db.prepare(`
-  INSERT INTO filter_keywords (keyword, enabled, archived, created_at, updated_at)
-  VALUES (?, ?, 0, ?, ?)
+  INSERT INTO filter_keywords (keyword, is_regex, enabled, archived, created_at, updated_at)
+  VALUES (?, ?, ?, 0, ?, ?)
 `);
 
 const updateFilterKeywordStmt = db.prepare(`
-  UPDATE filter_keywords SET keyword = ?, enabled = ?, updated_at = ?
+  UPDATE filter_keywords SET keyword = ?, is_regex = ?, enabled = ?, updated_at = ?
   WHERE id = ?
 `);
 
@@ -36,6 +36,7 @@ const deleteFilterKeywordStmt = db.prepare(`
 type FilterKeywordRow = {
   id: number;
   keyword: string;
+  is_regex: number;
   enabled: number;
   archived: number;
   created_at: string;
@@ -45,6 +46,7 @@ type FilterKeywordRow = {
 const rowToFilterKeyword = (row: FilterKeywordRow): FilterKeyword => ({
   id: row.id,
   keyword: row.keyword,
+  isRegex: Boolean(row.is_regex),
   enabled: Boolean(row.enabled),
   archived: Boolean(row.archived),
   createdAt: row.created_at,
@@ -70,9 +72,15 @@ export const filterKeywordsRepository = {
   addFilterKeyword(input: FilterKeywordInput): void {
     const now = getCurrentTimestamp();
     try {
-      insertFilterKeywordStmt.run(input.keyword, input.enabled !== false ? 1 : 0, now, now);
+      insertFilterKeywordStmt.run(
+        input.keyword,
+        input.isRegex ? 1 : 0,
+        input.enabled !== false ? 1 : 0,
+        now,
+        now,
+      );
       setNeedsReload();
-      logger.info({ keyword: input.keyword }, "Добавлено ключевое слово");
+      logger.info({ keyword: input.keyword, isRegex: input.isRegex }, "Добавлено ключевое слово");
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
         logger.warn({ keyword: input.keyword }, "Ключевое слово уже существует");
@@ -92,6 +100,7 @@ export const filterKeywordsRepository = {
 
     updateFilterKeywordStmt.run(
       input.keyword !== undefined ? input.keyword : keyword.keyword,
+      input.isRegex !== undefined ? (input.isRegex ? 1 : 0) : keyword.isRegex ? 1 : 0,
       input.enabled !== undefined ? (input.enabled ? 1 : 0) : keyword.enabled ? 1 : 0,
       now,
       id,
