@@ -15,12 +15,12 @@ const getSourceChannelByIdStmt = db.prepare(`
 `);
 
 const getEnabledSourceChannelsStmt = db.prepare(`
-  SELECT * FROM source_channels WHERE enabled = 1 ORDER BY created_at DESC
+  SELECT * FROM source_channels WHERE enabled = 1 AND archived = 0 ORDER BY created_at DESC
 `);
 
 const insertSourceChannelStmt = db.prepare(`
-  INSERT INTO source_channels (channel_id, channel_name, enabled, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT INTO source_channels (channel_id, channel_name, enabled, archived, created_at, updated_at)
+  VALUES (?, ?, ?, 0, ?, ?)
 `);
 
 const updateSourceChannelStmt = db.prepare(`
