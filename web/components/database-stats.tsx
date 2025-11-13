@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardDrive, Calendar, TrendingUp } from "lucide-react";
+import { HardDrive, Calendar } from "lucide-react";
 import { clientLogger } from "@/lib/client-logger";
 import { REFRESH_INTERVALS } from "@/lib/constants";
 
@@ -68,24 +68,6 @@ export function DatabaseStats() {
               <p className="text-xl sm:text-2xl font-bold truncate">{stats.sizeMB} MB</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {stats.totalMemes.toLocaleString()} записей
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Публикация</p>
-              <p className="text-xl sm:text-2xl font-bold">
-                {stats.totalMemes > 0
-                  ? ((stats.publishedMemes / stats.totalMemes) * 100).toFixed(1)
-                  : "0.0"}
-                %
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.publishedMemes} из {stats.totalMemes}
               </p>
             </div>
           </div>
