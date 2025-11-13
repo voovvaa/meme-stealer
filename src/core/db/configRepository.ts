@@ -1,26 +1,10 @@
 import { getDatabase } from "./database.js";
-import type {
-  Config,
-  ConfigInput,
-  SourceChannel,
-  SourceChannelInput,
-  FilterKeyword,
-  FilterKeywordInput,
-} from "../../types/database.js";
+import type { Config, ConfigInput } from "../../types/database.js";
 import { logger } from "../logger.js";
-import { filterKeywordsRepository } from "./filterKeywordsRepository.js";
 import { setNeedsReload, getCurrentTimestamp } from "./helpers.js";
-import { sourceChannelsRepository } from "./sourceChannelsRepository.js";
 
 // Re-export типов для обратной совместимости
-export type {
-  Config,
-  ConfigInput,
-  SourceChannel,
-  SourceChannelInput,
-  FilterKeyword,
-  FilterKeywordInput,
-};
+export type { Config, ConfigInput };
 
 const db = getDatabase();
 
@@ -142,22 +126,4 @@ export const configRepository = {
   clearNeedsReload(): void {
     clearNeedsReloadStmt.run();
   },
-
-  // Re-export source channels operations for backwards compatibility
-  getAllSourceChannels:
-    sourceChannelsRepository.getAllSourceChannels.bind(sourceChannelsRepository),
-  getEnabledSourceChannels:
-    sourceChannelsRepository.getEnabledSourceChannels.bind(sourceChannelsRepository),
-  addSourceChannel: sourceChannelsRepository.addSourceChannel.bind(sourceChannelsRepository),
-  updateSourceChannel: sourceChannelsRepository.updateSourceChannel.bind(sourceChannelsRepository),
-  deleteSourceChannel: sourceChannelsRepository.deleteSourceChannel.bind(sourceChannelsRepository),
-
-  // Re-export filter keywords operations for backwards compatibility
-  getAllFilterKeywords:
-    filterKeywordsRepository.getAllFilterKeywords.bind(filterKeywordsRepository),
-  getEnabledFilterKeywords:
-    filterKeywordsRepository.getEnabledFilterKeywords.bind(filterKeywordsRepository),
-  addFilterKeyword: filterKeywordsRepository.addFilterKeyword.bind(filterKeywordsRepository),
-  updateFilterKeyword: filterKeywordsRepository.updateFilterKeyword.bind(filterKeywordsRepository),
-  deleteFilterKeyword: filterKeywordsRepository.deleteFilterKeyword.bind(filterKeywordsRepository),
 };

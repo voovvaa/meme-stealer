@@ -16,23 +16,21 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const offset = (page - 1) * limit;
 
-    const posts = statsRepository.getPosts(limit, offset);
-    const totalCount = statsRepository.getPostsCount();
-
-    // Фильтруем только опубликованные посты с file_path
-    const galleryPosts = posts.filter((post) => post.filePath && post.targetMessageId);
+    // Фильтруем только опубликованные посты с file_path на уровне SQL
+    const posts = statsRepository.getPosts(limit, offset, true);
+    const totalCount = statsRepository.getPostsCount(true);
 
     logger.debug(
       {
-        firstPostPath: galleryPosts[0]?.filePath,
-        count: galleryPosts.length,
+        firstPostPath: posts[0]?.filePath,
+        count: posts.length,
         page,
       },
       "Gallery posts fetched",
     );
 
     return NextResponse.json({
-      posts: galleryPosts,
+      posts,
       hasMore: offset + limit < totalCount,
       page,
       total: totalCount,

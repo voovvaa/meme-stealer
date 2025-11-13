@@ -14,44 +14,31 @@ type GalleryPost = {
   createdAt: string;
 };
 
-// Компонент с параллакс эффектом
-function ParallaxCard({ post, index }: { post: GalleryPost; index: number }) {
+// Компонент с параллакс эффектом (оптимизировано - один scroll listener на всю страницу)
+function ParallaxCard({
+  post,
+  index,
+  scrollY,
+}: {
+  post: GalleryPost;
+  index: number;
+  scrollY: number;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // Отменяем предыдущий запрос анимации для оптимизации
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
+    if (!cardRef.current) return;
 
-      rafRef.current = requestAnimationFrame(() => {
-        if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const cardCenter = rect.top + rect.height / 2;
 
-        const rect = cardRef.current.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const cardCenter = rect.top + rect.height / 2;
-
-        // Вычисляем смещение относительно центра экрана
-        // Чем дальше от центра, тем больше смещение
-        const offset = (windowHeight / 2 - cardCenter) * 0.05;
-        setParallaxOffset(offset);
-      });
-    };
-
-    // Используем passive для лучшей производительности
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Инициализация
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
+    // Вычисляем смещение относительно центра экрана
+    // Чем дальше от центра, тем больше смещение
+    const offset = (windowHeight / 2 - cardCenter) * 0.05;
+    setParallaxOffset(offset);
+  }, [scrollY]); // Пересчитываем только при изменении глобального scrollY
 
   return (
     <div
@@ -110,8 +97,33 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+
+  // Глобальный scroll listener (один для всех карточек вместо 50+)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Инициализация
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const loadPosts = useCallback(async (pageNum: number) => {
     if (loadingRef.current) return;
@@ -190,7 +202,7 @@ export default function GalleryPage() {
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
           {posts.map((post, index) => (
-            <ParallaxCard key={post.id} post={post} index={index} />
+            <ParallaxCard key={post.id} post={post} index={index} scrollY={scrollY} />
           ))}
         </div>
       )}
