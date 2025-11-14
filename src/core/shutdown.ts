@@ -25,6 +25,46 @@ class ShutdownManager {
   }
 
   /**
+   * Проверяет, является ли ошибка сетевой ошибкой Telegram клиента
+   */
+  private isTelegramNetworkError(reason: unknown): boolean {
+    if (!reason) return false;
+
+    // Проверяем строковое представление ошибки
+    const errorString = String(reason);
+    const errorMessage = reason instanceof Error ? reason.message : errorString;
+
+    // Список сетевых ошибок Telegram, которые не должны вызывать shutdown
+    const telegramNetworkErrors = [
+      "TIMEOUT",
+      "EHOSTUNREACH", // Host is unreachable
+      "ECONNRESET", // Connection reset by peer
+      "ECONNREFUSED", // Connection refused
+      "ETIMEDOUT", // Connection timed out
+      "ENETUNREACH", // Network is unreachable
+      "ENOTFOUND", // DNS lookup failed
+    ];
+
+    // Проверяем, содержит ли ошибка один из известных сетевых кодов
+    for (const errorCode of telegramNetworkErrors) {
+      if (errorString.includes(errorCode) || errorMessage.includes(errorCode)) {
+        // Дополнительно проверяем, что это ошибка из telegram клиента
+        // (путь содержит telegram или updates.js)
+        if (
+          errorString.includes("telegram") ||
+          errorString.includes("updates.js") ||
+          errorMessage.includes("telegram") ||
+          errorMessage.includes("updates.js")
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Выполняет graceful shutdown
    */
   public async shutdown(signal: string): Promise<void> {
@@ -88,6 +128,20 @@ class ShutdownManager {
 
     // Обработка необработанных отклонений промисов
     process.on("unhandledRejection", (reason: unknown) => {
+      // Проверяем, является ли это сетевой ошибкой Telegram клиента
+      const isTelegramNetworkError = this.isTelegramNetworkError(reason);
+
+      if (isTelegramNetworkError) {
+        // Логируем ошибку, но не завершаем приложение
+        // Telegram клиент с autoReconnect автоматически переподключится
+        logger.warn(
+          { reason },
+          "Сетевая ошибка Telegram клиента (TIMEOUT/EHOSTUNREACH). Клиент переподключится автоматически",
+        );
+        return;
+      }
+
+      // Для всех остальных ошибок выполняем shutdown
       logger.error({ reason }, "Необработанное отклонение промиса");
       void this.shutdown("unhandledRejection");
     });
