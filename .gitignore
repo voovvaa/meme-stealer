@@ -17,6 +17,8 @@ memes.sqlite
 # Logs
 *.log
 logs/
+# Исключение: директория логов в веб-приложении
+!web/app/logs/
 
 # IDE
 .idea

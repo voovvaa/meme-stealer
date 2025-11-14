@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BarChart3, Radio, Filter, Settings, History, Clock, Images, Menu, X } from "lucide-react";
+import { BarChart3, Radio, Filter, Settings, History, Clock, Images, Menu, X, Terminal } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: BarChart3 },
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/queue", label: "Отложенные", icon: Clock },
   { href: "/gallery", label: "Галерея", icon: Images },
   { href: "/history", label: "История", icon: History },
+  { href: "/logs", label: "Логи", icon: Terminal },
   { href: "/settings", label: "Настройки", icon: Settings },
 ];
 
