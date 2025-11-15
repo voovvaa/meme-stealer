@@ -19,6 +19,7 @@ memes.sqlite
 logs/
 # Исключение: директория логов в веб-приложении
 !web/app/logs/
+!web/app/api/docker/logs/
 
 # IDE
 .idea
