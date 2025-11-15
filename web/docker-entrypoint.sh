@@ -36,8 +36,8 @@ if [ -S /var/run/docker.sock ]; then
         addgroup -g "${DOCKER_SOCK_GID}" docker
     fi
 
-    # Добавляем пользователя nextjs в группу docker
-    addgroup nextjs docker
+    # Добавляем пользователя nextjs в группу docker (Alpine Linux синтаксис)
+    adduser nextjs docker
     echo "${GREEN}[Web Entrypoint] User nextjs added to docker group${NC}"
 else
     echo "${YELLOW}[Web Entrypoint] Warning: Docker socket not found at /var/run/docker.sock${NC}"
