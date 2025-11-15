@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,12 +24,7 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const logsEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  const scrollToBottom = () => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const fetchStatus = async () => {
     try {
@@ -46,10 +41,8 @@ export default function LogsPage() {
       const res = await fetch("/api/docker/logs?tail=200");
       if (res.ok) {
         const data = await res.json();
-        setLogs(data.logs || []);
-        if (autoRefresh) {
-          scrollToBottom();
-        }
+        // Reverse logs so newest are at the top
+        setLogs((data.logs || []).reverse());
       }
     } catch (error) {
       clientLogger.error({ component: "LogsPage", action: "fetchLogs" }, error);
@@ -261,7 +254,6 @@ export default function LogsPage() {
                 </div>
               ))
             )}
-            <div ref={logsEndRef} />
           </div>
         </CardContent>
       </Card>
