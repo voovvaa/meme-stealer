@@ -24,6 +24,26 @@ find /app/sessions -type d -exec chmod 775 {} \;
 # Устанавливаем 664 для файлов (rw-rw-r--) - важно для SQLite WAL файлов
 find /app/sessions -type f -exec chmod 664 {} \;
 
+# Настройка доступа к Docker socket
+if [ -S /var/run/docker.sock ]; then
+    echo "${YELLOW}[Web Entrypoint] Configuring Docker socket access...${NC}"
+    # Получаем GID группы, владеющей docker.sock
+    DOCKER_SOCK_GID=$(stat -c '%g' /var/run/docker.sock)
+    echo "${YELLOW}[Web Entrypoint] Docker socket GID: ${DOCKER_SOCK_GID}${NC}"
+
+    # Создаем группу docker с таким же GID, если её нет
+    if ! getent group docker >/dev/null 2>&1; then
+        addgroup -g "${DOCKER_SOCK_GID}" docker
+    fi
+
+    # Добавляем пользователя nextjs в группу docker (Alpine Linux синтаксис)
+    adduser nextjs docker
+    echo "${GREEN}[Web Entrypoint] User nextjs added to docker group${NC}"
+else
+    echo "${YELLOW}[Web Entrypoint] Warning: Docker socket not found at /var/run/docker.sock${NC}"
+    echo "${YELLOW}[Web Entrypoint] Docker management features will not be available${NC}"
+fi
+
 # Запускаем приложение от пользователя nextjs
 echo "${GREEN}[Web Entrypoint] Starting Next.js server as nextjs user...${NC}"
 exec gosu nextjs node server.js
