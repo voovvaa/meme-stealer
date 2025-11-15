@@ -48,8 +48,7 @@ export async function GET(request: Request) {
         // Docker adds 8 bytes header to each log line, remove it
         const cleanLine = line.slice(8);
         return cleanLine;
-      })
-      .reverse(); // Reverse so newest logs are first
+      });
 
     return NextResponse.json({
       logs: logLines,

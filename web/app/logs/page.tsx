@@ -41,7 +41,7 @@ export default function LogsPage() {
       const res = await fetch("/api/docker/logs?tail=200");
       if (res.ok) {
         const data = await res.json();
-        // Logs are already reversed on the API side (newest first)
+        // Logs are in natural order (oldest first, newest last)
         setLogs(data.logs || []);
       }
     } catch (error) {
